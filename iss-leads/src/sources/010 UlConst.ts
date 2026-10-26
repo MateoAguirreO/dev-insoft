@@ -23,3 +23,9 @@ export enum TEstadoLead {
   Descartado = 4,
   Convertido = 5,
 }
+
+/** Horas que dura una sesión: es el vencimiento del JWT y de su fila en `seg_sesiones`. */
+export const HorasVigenciaSesion: number = 8;
+
+/** Longitud mínima de la clave de un usuario. */
+export const LongitudMinimaClave: number = 8;

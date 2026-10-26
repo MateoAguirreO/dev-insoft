@@ -1,10 +1,10 @@
 import { TControllerServer } from "@ingenieria_insoft/ispazureutils";
-import { isBool, TErr401, TErr500, val2Bool, val2Int, val2Str } from "@ingenieria_insoft/ispgen";
+import { isBool, TErr401, TErr500, TIS_IApp, TJSONObject, val2Bool, val2Int, val2Str } from "@ingenieria_insoft/ispgen";
 import { varEnv } from "@ingenieria_insoft/ispnodejs";
 import { Rst401, Rst500 } from "@ingenieria_insoft/ispserver";
-import { JwtPayload, TokenExpiredError, verify as verificarFirma } from "jsonwebtoken";
+import { JwtPayload, sign as firmarToken, TokenExpiredError, verify as verificarFirma } from "jsonwebtoken";
 import { TSesion } from "../010 Objetos/050_UlSesion";
-import { tablas } from "../010 UlConst";
+import { HorasVigenciaSesion, secuencias, tablas } from "../010 UlConst";
 
 /** Sesiones del API (`seg_sesiones`). Sin seguridad propia: es la que usa TSistemaLeads para validar el token. */
 export class TSesionController extends TControllerServer<TSesion> {
@@ -46,5 +46,42 @@ export class TSesionController extends TControllerServer<TSesion> {
 		const [bactivo]: Array<unknown> = await this.Conn.lookUp(tablas.ntblSegUsuarios, ["bactivo"], { iusuario: Sesion.iusuario });
 		if (!val2Bool(bactivo)) throw Rst401(TErr401.unauthorized, "Usuario no autorizado");
 		return Sesion;
+	}
+
+	/**
+	 * Abre una sesión para un usuario ya autenticado y firma su JWT, con el `isesion` como `jti`.
+	 * @param iusuario usuario que inicia sesión
+	 * @param iapp aplicación desde la que inicia sesión
+	 * @param iequipo equipo desde el que inicia sesión
+	 * @returns el token y su vencimiento
+	 */
+	public async abrir(iusuario: string, iapp: keyof typeof TIS_IApp, iequipo: number): Promise<TJSONObject> {
+		const Sesion: TSesion = TSesion.JSONToObject<TSesion>({
+			isesion: await this.Conn.nextVal(secuencias.seqSegSesiones),
+			iusuario,
+			fhvence: new Date(Date.now() + HorasVigenciaSesion * 3600000)
+		});
+		// Todavía no hay token: la auditoría de creación es la del propio inicio de sesión.
+		Sesion.iusuariocre = iusuario;
+		Sesion.iappcre = iapp;
+		Sesion.iequipocre = iequipo;
+		Sesion.ipcre = val2Str(this.ctxUser.ip, "127.0.0.1");
+		Sesion.fhcre = new Date();
+		await this.insert(Sesion);
+
+		const token: string = firmarToken({ usuario: iusuario, iapp, iequipo }, TSesionController.llaveJWT, {
+			algorithm: "HS256",
+			expiresIn: HorasVigenciaSesion * 3600,
+			jwtid: String(Sesion.isesion)
+		});
+		return { token, fhvence: Sesion.fhvence };
+	}
+
+	/**
+	 * Cierra la sesión borrando su fila: su token deja de servir aunque no haya vencido.
+	 * @param Sesion sesión del token verificado
+	 */
+	public async cerrar(Sesion: TSesion): Promise<void> {
+		await this.delete(Sesion);
 	}
 }

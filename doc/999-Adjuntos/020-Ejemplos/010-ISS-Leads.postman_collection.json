@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "d02202b1-34df-40a1-a743-a32b3658b76c",
 		"name": "010-ISS-Leads",
-		"description": "# ISS-Leads\n\nAPI REST del servicio **ISS-Leads** (Azure Functions y PostgreSQL 18). Administra leads, sus correos y los mensajes enviados a cada lead. Las rutas y los nombres de función son los mismos del servicio (skill `iss-azure-function`).\n\n## Ambientes\n\n| Ambiente | `baseUrl` |\n| --- | --- |\n| Local | `http://localhost:7071/api`; el servicio se levanta con `npm start` en `iss-leads` |\n\nImporta también el ambiente **020-ISS-Leads-Local** y selecciónalo antes de enviar.\n\n## Autenticación\n\nTodo endpoint exige `Authorization: Bearer <JWT>`, salvo **010-Estado del servicio**. La colección lo envía con la variable `{{token}}` del ambiente.\n\n- El JWT es HS256 y su `jti` identifica una fila de `seg_sesiones`. El servicio verifica la firma, el vencimiento, que la sesión siga abierta y que el usuario esté activo; si algo falla responde **401**.\n- **Temporal, hasta que exista el inicio de sesión (paso 3):** el token se genera con el comando local del desarrollador y se pega en el *Current value* de `token`. El token nunca se guarda en la colección ni en el repositorio.\n\n## Variables\n\n| Variable | Ámbito | Contenido |\n| --- | --- | --- |\n| `baseUrl` | Ambiente | URL base del API |\n| `token` | Ambiente (secreta) | JWT del usuario |\n| `ilead` | Colección | La guarda **040-Leads / 010-Crear lead** |\n| `filtroLeads` | Colección | La arma **040-Leads / 040-Listar leads paginado** |\n| `ileadDuplicado`, `ileadRecodificado` | Colección | Las generan **070-Duplicar lead** y **080-Recodificar lead** |\n| `imensaje` | Colección | La guarda **050-Mensajes del lead / 010-Registrar mensaje** |\n\n## Formato de respuesta\n\nToda respuesta trae `encabezado` (`resultado`, `tiempo`, `fhentrada`, `fhsalida` y, cuando falla, `imensaje` con el código y `mensaje` con el motivo) y `respuesta`. En las consultas `respuesta` trae `datos`; en los listados trae `pagina`, `qregistros`, `totalregistros`, `totalpaginas` y `datos`.\n\n## Códigos de respuesta\n\n| Código | Cuándo |\n| --- | --- |\n| 200, 201, 202 | Consulta, creación o modificación exitosa |\n| 400 | Datos inválidos o regla de negocio incumplida; `mensaje` dice cuál |\n| 401 | Sin token, token inválido o vencido, sesión cerrada o usuario inactivo |\n| 404 | El recurso no existe |\n| 500 | Error del servicio o de la base de datos |\n\n## Cómo correrla\n\nEl *Collection Runner* la recorre en orden: crea un lead, lo consulta, lo lista, lo modifica, lo verifica, lo duplica, recodifica y elimina la copia, y le registra un mensaje. Cada corrida deja ese lead y su mensaje en la BD, porque un lead con mensajes no se elimina. Solo se usan datos sintéticos.\n\nCada request trae sus ejemplos de respuesta (éxito y errores), tomados de respuestas reales del servicio local.",
+		"description": "# ISS-Leads\n\nAPI REST del servicio **ISS-Leads** (Azure Functions y PostgreSQL 18). Administra leads, sus correos y los mensajes enviados a cada lead. Las rutas y los nombres de función son los mismos del servicio (skill `iss-azure-function`).\n\n## Ambientes\n\n| Ambiente | `baseUrl` |\n| --- | --- |\n| Local | `http://localhost:7071/api`; el servicio se levanta con `npm start` en `iss-leads` |\n\nImporta también el ambiente **020-ISS-Leads-Local** y selecciónalo antes de enviar.\n\n## Autenticación\n\nTodo endpoint exige `Authorization: Bearer <JWT>`, salvo **010-Estado del servicio** y **020-Sesiones / 010-Iniciar sesión**. La colección lo envía con la variable `{{token}}` del ambiente.\n\n- **020-Sesiones / 010-Iniciar sesión** usa `usuario` y `clave` del ambiente y guarda el token en `token`; no hay que copiarlo a mano.\n- El JWT es HS256, dura 8 horas y su `jti` identifica una fila de `seg_sesiones`. El servicio verifica la firma, el vencimiento, que la sesión siga abierta y que el usuario esté activo; si algo falla responde **401**.\n- **060-Cierre de sesión** borra la sesión: su token deja de servir aunque no haya vencido.\n- El token y la clave nunca se guardan en la colección ni en el repositorio: van en el *Current value* del ambiente.\n\n### Primer uso\n\nPon tu usuario y tu clave en el *Current value* de `usuario` y `clave` del ambiente. Si ese usuario todavía no existe, créalo una vez: con un token temporal que genera el desarrollador, duplica **030-Usuarios / 010-Crear usuario**, quítale el script previo y pon en el body tu `iusuario`, tu `nombre` y tu `clave` (mínimo 8 caracteres).\n\n## Variables\n\n| Variable | Ámbito | Contenido |\n| --- | --- | --- |\n| `baseUrl` | Ambiente | URL base del API |\n| `usuario`, `clave` | Ambiente (la clave es secreta) | Credenciales con las que inicia sesión **020-Sesiones / 010-Iniciar sesión** |\n| `token` | Ambiente (secreta) | JWT de la sesión; lo guarda el inicio de sesión |\n| `usuarioPrueba`, `clavePrueba`, `claveNuevaPrueba` | Colección | Las generan los scripts previos de **030-Usuarios** para un usuario de prueba que se crea y se elimina |\n| `ilead` | Colección | La guarda **040-Leads / 010-Crear lead** |\n| `filtroLeads` | Colección | La arma **040-Leads / 040-Listar leads paginado** |\n| `ileadDuplicado`, `ileadRecodificado` | Colección | Las generan **070-Duplicar lead** y **080-Recodificar lead** |\n| `imensaje` | Colección | La guarda **050-Mensajes del lead / 010-Registrar mensaje** |\n\n## Formato de respuesta\n\nToda respuesta trae `encabezado` (`resultado`, `tiempo`, `fhentrada`, `fhsalida` y, cuando falla, `imensaje` con el código y `mensaje` con el motivo) y `respuesta`. En las consultas `respuesta` trae `datos`; en los listados trae `pagina`, `qregistros`, `totalregistros`, `totalpaginas` y `datos`.\n\n## Códigos de respuesta\n\n| Código | Cuándo |\n| --- | --- |\n| 200, 201, 202 | Consulta, creación o modificación exitosa |\n| 400 | Datos inválidos o regla de negocio incumplida; `mensaje` dice cuál |\n| 401 | Sin token, token inválido o vencido, sesión cerrada o usuario inactivo |\n| 404 | El recurso no existe |\n| 500 | Error del servicio o de la base de datos |\n\n## Cómo correrla\n\nEl *Collection Runner* la recorre en orden: inicia sesión; crea, consulta, lista, modifica y elimina un usuario de prueba; crea un lead, lo consulta, lo lista, lo modifica, lo verifica, lo duplica, recodifica y elimina la copia, y le registra un mensaje; al final cierra la sesión y comprueba que el token ya no sirve. Cada corrida deja el lead y su mensaje en la BD, porque un lead con mensajes no se elimina. Solo se usan datos sintéticos.\n\nCada request trae sus ejemplos de respuesta (éxito y errores), tomados de respuestas reales del servicio local.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {
@@ -19,6 +19,21 @@
 		{
 			"key": "baseUrl",
 			"value": "http://localhost:7071/api",
+			"type": "string"
+		},
+		{
+			"key": "usuarioPrueba",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "clavePrueba",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "claveNuevaPrueba",
+			"value": "",
 			"type": "string"
 		},
 		{
@@ -111,7 +126,686 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 1,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.309Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.310Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"name\": \"iss-leads\",\n\t\t\t\"version\": \"1.0.0\",\n\t\t\t\"timezone\": \"\",\n\t\t\t\"nodeversion\": \"v24.22.1\",\n\t\t\t\"slot\": \"PRODUCTION\",\n\t\t\t\"devby\": \"REEMPLACE-POR-DESARROLLADOR\",\n\t\t\t\"database\": {\n\t\t\t\t\"database\": \"leads\",\n\t\t\t\t\"bconnected\": true,\n\t\t\t\t\"timeconnect\": 1\n\t\t\t},\n\t\t\t\"getlocation\": {\n\t\t\t\t\"sip\": \"203.0.113.10\",\n\t\t\t\t\"snombre\": \"\",\n\t\t\t\t\"grupo\": \"GEN\",\n\t\t\t\t\"ipais\": \"CO\",\n\t\t\t\t\"pais\": \"Colombia\",\n\t\t\t\t\"iregion\": \"REEMPLACE-POR-REGION\",\n\t\t\t\t\"region\": \"REEMPLACE-POR-REGION\",\n\t\t\t\t\"iciudad\": \"REEMPLACE-POR-CIUDAD\",\n\t\t\t\t\"ciudad\": \"REEMPLACE-POR-CIUDAD\",\n\t\t\t\t\"latitud\": 0,\n\t\t\t\t\"longitud\": 0,\n\t\t\t\t\"zipcode\": \"REEMPLACE-POR-CODIGO-POSTAL\",\n\t\t\t\t\"isp\": \"REEMPLACE-POR-PROVEEDOR\",\n\t\t\t\t\"fcreacion\": \"2024-05-22T01:55:21.970Z\",\n\t\t\t\t\"fultrequest\": \"2026-10-26T21:01:10.147Z\"\n\t\t\t}\n\t\t}\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 1,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.453Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.454Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"name\": \"iss-leads\",\n\t\t\t\"version\": \"1.0.0\",\n\t\t\t\"timezone\": \"\",\n\t\t\t\"nodeversion\": \"v24.22.1\",\n\t\t\t\"slot\": \"PRODUCTION\",\n\t\t\t\"devby\": \"REEMPLACE-POR-DESARROLLADOR\",\n\t\t\t\"database\": {\n\t\t\t\t\"database\": \"leads\",\n\t\t\t\t\"bconnected\": true,\n\t\t\t\t\"timeconnect\": 0\n\t\t\t},\n\t\t\t\"getlocation\": {\n\t\t\t\t\"sip\": \"203.0.113.10\",\n\t\t\t\t\"snombre\": \"\",\n\t\t\t\t\"grupo\": \"GEN\",\n\t\t\t\t\"ipais\": \"CO\",\n\t\t\t\t\"pais\": \"Colombia\",\n\t\t\t\t\"iregion\": \"REEMPLACE-POR-REGION\",\n\t\t\t\t\"region\": \"REEMPLACE-POR-REGION\",\n\t\t\t\t\"iciudad\": \"REEMPLACE-POR-CIUDAD\",\n\t\t\t\t\"ciudad\": \"REEMPLACE-POR-CIUDAD\",\n\t\t\t\t\"latitud\": 0,\n\t\t\t\t\"longitud\": 0,\n\t\t\t\t\"zipcode\": \"REEMPLACE-POR-CODIGO-POSTAL\",\n\t\t\t\t\"isp\": \"REEMPLACE-POR-PROVEEDOR\",\n\t\t\t\t\"fcreacion\": \"2024-05-22T01:55:21.970Z\",\n\t\t\t\t\"fultrequest\": \"2026-10-26T21:32:57.027Z\"\n\t\t\t}\n\t\t}\n\t}\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "020-Sesiones",
+			"description": "Inicio de sesión: entrega el JWT que exigen los demás endpoints. La sesión queda en `seg_sesiones` (tabla de movimiento, con auditoría de creación).",
+			"item": [
+				{
+					"name": "010-Iniciar sesión",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+									"pm.test(\"encabezado.resultado es true\", function () { pm.expect(pm.response.json().encabezado.resultado).to.eql(true); });",
+									"pm.environment.set(\"token\", pm.response.json().respuesta.datos.token);"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"usuario\": \"{{usuario}}\",\n\t\"clave\": \"{{clave}}\",\n\t\"iapp\": \"IAppOther\",\n\t\"iequipo\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/sesiones",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"sesiones"
+							]
+						},
+						"description": "Valida usuario y clave, abre una sesión y entrega su JWT. Se usa antes de cualquier otro endpoint y cada vez que el token vence.\n\n**Función:** `SESION_INSERT_HTTP` · **Ruta:** `POST /api/sesiones` · **Autenticación:** ninguna; es público a propósito, porque es la única forma de obtener un token.\n\n**Body:** `usuario` y `clave` (obligatorios); `iapp` (opcional, una aplicación de `TIS_IApp`; por defecto `IAppOther`) e `iequipo` (opcional, entero; por defecto 0), que quedan en la auditoría de la sesión y en el token.\n\n**Reglas:** el usuario no distingue mayúsculas. Si el usuario no existe, está inactivo o la clave no coincide, responde 401 con el mismo mensaje, para no revelar cuál falló. La sesión y el token duran 8 horas.\n\n**Respuestas:** 201 con `token`, `fhvence` y `usuario` · 400 si falta el usuario o la clave · 401 si las credenciales no sirven.\n\n**Script de prueba:** valida el 201 y guarda el token en la variable `token` del ambiente."
+					},
+					"response": [
+						{
+							"name": "201 Sesión iniciada",
+							"originalRequest": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"usuario\": \"{{usuario}}\",\n\t\"clave\": \"{{clave}}\",\n\t\"iapp\": \"IAppOther\",\n\t\"iequipo\": 1\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/sesiones",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"sesiones"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 39,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.305Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.344Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"token\": \"REEMPLACE-POR-TOKEN\",\n\t\t\t\"fhvence\": \"2026-10-27T05:40:46.340Z\",\n\t\t\t\"usuario\": \"prueba.postman\"\n\t\t}\n\t}\n}"
+						},
+						{
+							"name": "401 Usuario o clave incorrectos",
+							"originalRequest": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"usuario\": \"{{usuario}}\",\n\t\"clave\": \"clave-equivocada\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/sesiones",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"sesiones"
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 34,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.267Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.301Z\",\n\t\t\"imensaje\": 401050,\n\t\t\"mensaje\": \"Usuario o clave incorrectos\"\n\t}\n}"
+						},
+						{
+							"name": "400 Falta la clave",
+							"originalRequest": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"usuario\": \"{{usuario}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/sesiones",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"sesiones"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 0,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.263Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.263Z\",\n\t\t\"imensaje\": 400040,\n\t\t\"mensaje\": \"No se ha recibido el parámetro 'clave' en el cuerpo de la petición, por lo cual no ha sido posible procesar su solicitud\"\n\t}\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "030-Usuarios",
+			"description": "Usuarios que inician sesión en el API (`seg_usuarios`, tabla de datos con auditoría de creación y modificación). La clave se guarda como hash scrypt con sal propia y ninguna respuesta la entrega. El Runner crea un usuario de prueba, lo consulta, lo modifica y lo elimina.",
+			"item": [
+				{
+					"name": "010-Crear usuario",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.collectionVariables.set(\"usuarioPrueba\", \"prueba.\" + Date.now());",
+									"pm.collectionVariables.set(\"clavePrueba\", \"Clave-\" + Math.random().toString(36).slice(2, 12));"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+									"pm.test(\"encabezado.resultado es true\", function () { pm.expect(pm.response.json().encabezado.resultado).to.eql(true); });",
+									"pm.test(\"La respuesta no trae la clave\", function () { pm.expect(pm.response.json().respuesta.datos).to.not.have.property(\"clave\"); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"iusuario\": \"{{usuarioPrueba}}\",\n\t\"nombre\": \"Usuario de prueba Postman\",\n\t\"clave\": \"{{clavePrueba}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/usuarios",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"usuarios"
+							]
+						},
+						"description": "Registra un usuario que puede iniciar sesión en el API. Se usa para darle acceso a una persona nueva.\n\n**Función:** `API_POST_Usuario` · **Ruta:** `POST /api/usuarios`\n\n**Body:** `iusuario` (obligatorio, máx. 30; se guarda en minúscula y sin espacios), `nombre` (obligatorio, máx. 100), `clave` (obligatoria, mínimo 8 caracteres) y `bactivo` (por defecto `true`).\n\n**Reglas:** la clave se guarda como hash scrypt con sal propia y nunca sale en las respuestas. La auditoría la pone el servidor con el usuario del token.\n\n**Respuestas:** 201 con el usuario, sin la clave · 400 si falta un dato, la clave es corta o el usuario ya existe · 401 sin token válido.\n\n**Script previo:** genera `usuarioPrueba` y `clavePrueba` para un usuario de prueba. **Script de prueba:** valida el 201 y que la respuesta no traiga la clave."
+					},
+					"response": [
+						{
+							"name": "201 Usuario creado",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"iusuario\": \"prueba.1793050846340\",\n\t\"nombre\": \"Usuario de prueba Postman\",\n\t\"clave\": \"{{clavePrueba}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/usuarios",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"usuarios"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 37,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.353Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.390Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"iusuario\": \"prueba.1793050846340\",\n\t\t\t\"nombre\": \"Usuario de prueba Postman\",\n\t\t\t\"bactivo\": true,\n\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\"iequipoult\": 1,\n\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\"fhult\": \"2026-10-26T21:40:46.385Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 1,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:40:46.385Z\"\n\t\t}\n\t}\n}"
+						},
+						{
+							"name": "400 Clave muy corta",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"iusuario\": \"prueba.1793050846340\",\n\t\"nombre\": \"Usuario de prueba Postman\",\n\t\"clave\": \"corta\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/usuarios",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"usuarios"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 1,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.350Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.351Z\",\n\t\t\"imensaje\": 400999,\n\t\t\"mensaje\": \"La clave debe tener al menos 8 caracteres\"\n\t}\n}"
+						},
+						{
+							"name": "401 Sin token",
+							"originalRequest": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"iusuario\": \"prueba.1793050846340\",\n\t\"nombre\": \"Usuario de prueba Postman\",\n\t\"clave\": \"{{clavePrueba}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/usuarios",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"usuarios"
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 0,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.347Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.347Z\",\n\t\t\"imensaje\": 401020,\n\t\t\"mensaje\": \"No se ha definido el parámetro de autenticación, por favor verifique que esté enviando el header, query o parámetro \\\"authorization\\\"\"\n\t}\n}"
+						}
+					]
+				},
+				{
+					"name": "020-Obtener usuario",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+									"pm.test(\"encabezado.resultado es true\", function () { pm.expect(pm.response.json().encabezado.resultado).to.eql(true); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/usuarios/{{usuarioPrueba}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"usuarios",
+								"{{usuarioPrueba}}"
+							]
+						},
+						"description": "Consulta un usuario. Se usa para ver sus datos y su estado.\n\n**Función:** `API_GET_Usuario` · **Ruta:** `GET /api/usuarios/{iusuario}`\n\n**Respuestas:** 200 con el usuario, sin la clave · 404 si no existe · 401 sin token válido.\n\n**Script de prueba:** valida el 200."
+					},
+					"response": [
+						{
+							"name": "200 Usuario encontrado",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/usuarios/prueba.1793050846340",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"usuarios",
+										"prueba.1793050846340"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.393Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.395Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"iusuario\": \"prueba.1793050846340\",\n\t\t\t\"nombre\": \"Usuario de prueba Postman\",\n\t\t\t\"bactivo\": true,\n\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\"iequipoult\": 1,\n\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\"fhult\": \"2026-10-26T21:40:46.385Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 1,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:40:46.385Z\"\n\t\t}\n\t}\n}"
+						},
+						{
+							"name": "404 Usuario inexistente",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/usuarios/no.existe",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"usuarios",
+										"no.existe"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.397Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.399Z\",\n\t\t\"imensaje\": 404010,\n\t\t\"mensaje\": \"No se ha encontrado el recurso solicitado. No se ha encontrado el información de Usuario con identificador [\\\"iusuario\\\":\\\"no.existe\\\"]\"\n\t}\n}"
+						}
+					]
+				},
+				{
+					"name": "030-Listar usuarios",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+									"pm.test(\"encabezado.resultado es true\", function () { pm.expect(pm.response.json().encabezado.resultado).to.eql(true); });",
+									"pm.test(\"Ningún usuario trae la clave\", function () { pm.expect(pm.response.json().respuesta.datos.every(function (u) { return !(\"clave\" in u); })).to.eql(true); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/usuarios",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"usuarios"
+							]
+						},
+						"description": "Lista los usuarios, sin la clave. Se usa para administrar los accesos.\n\n**Función:** `API_GET_LIST_Usuario` · **Ruta:** `GET /api/usuarios`, sin filtro: con una llave de texto, la ruta del filtro chocaría con la de obtener.\n\n**Respuestas:** 200 con `pagina`, `qregistros`, `totalregistros`, `totalpaginas` y `datos` · 401 sin token válido.\n\n**Script de prueba:** valida el 200 y que ningún usuario traiga la clave."
+					},
+					"response": [
+						{
+							"name": "200 Listado",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/usuarios",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"usuarios"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.401Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.403Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"pagina\": 1,\n\t\t\"qregistros\": 1000,\n\t\t\"totalregistros\": 4,\n\t\t\"totalpaginas\": 1,\n\t\t\"datos\": [\n\t\t\t{\n\t\t\t\t\"iusuario\": \"postman\",\n\t\t\t\t\"nombre\": \"Usuario temporal de Postman\",\n\t\t\t\t\"bactivo\": true\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"iusuario\": \"prueba.1793050846340\",\n\t\t\t\t\"nombre\": \"Usuario de prueba Postman\",\n\t\t\t\t\"bactivo\": true,\n\t\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\t\"iequipoult\": 1,\n\t\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\t\"fhult\": \"2026-10-26T21:40:46.385Z\",\n\t\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\t\"iequipocre\": 1,\n\t\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\t\"fhcre\": \"2026-10-26T21:40:46.385Z\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"iusuario\": \"prueba.postman\",\n\t\t\t\t\"nombre\": \"Usuario de prueba Postman\",\n\t\t\t\t\"bactivo\": true,\n\t\t\t\t\"iusuarioult\": \"prueba.postman.admin\",\n\t\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\t\"iequipoult\": 0,\n\t\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\t\"fhult\": \"2026-10-26T21:40:46.246Z\",\n\t\t\t\t\"iusuariocre\": \"prueba.postman.admin\",\n\t\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\t\"iequipocre\": 0,\n\t\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\t\"fhcre\": \"2026-10-26T21:40:46.246Z\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"iusuario\": \"prueba.postman.admin\",\n\t\t\t\t\"nombre\": \"Admin temporal del generador\",\n\t\t\t\t\"bactivo\": true\n\t\t\t}\n\t\t]\n\t}\n}"
+						}
+					]
+				},
+				{
+					"name": "040-Modificar usuario",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.collectionVariables.set(\"claveNuevaPrueba\", \"Nueva-\" + Math.random().toString(36).slice(2, 12));"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 202\", function () { pm.response.to.have.status(202); });",
+									"pm.test(\"encabezado.resultado es true\", function () { pm.expect(pm.response.json().encabezado.resultado).to.eql(true); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"nombre\": \"Usuario de prueba Postman (editado)\",\n\t\"clave\": \"{{claveNuevaPrueba}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/usuarios/{{usuarioPrueba}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"usuarios",
+								"{{usuarioPrueba}}"
+							]
+						},
+						"description": "Modifica el nombre, el estado o la clave de un usuario. Se usa para cambiar la clave o desactivar un acceso.\n\n**Función:** `API_PUT_Usuario` · **Ruta:** `PUT /api/usuarios/{iusuario}`\n\n**Body:** `nombre`, `bactivo` y `clave`, todos opcionales; solo se actualiza lo que llega.\n\n**Reglas:** una clave nueva (mínimo 8 caracteres) reemplaza el hash y la anterior deja de servir. Con `bactivo` en `false` el usuario no puede iniciar sesión y sus tokens vigentes dejan de servir.\n\n**Respuestas:** 202 con el usuario, sin la clave · 400 si el nombre llega vacío o la clave es corta · 401 sin token válido.\n\n**Script previo:** genera `claveNuevaPrueba`. **Script de prueba:** valida el 202."
+					},
+					"response": [
+						{
+							"name": "202 Usuario modificado",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"nombre\": \"Usuario de prueba Postman (editado)\",\n\t\"clave\": \"{{claveNuevaPrueba}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/usuarios/prueba.1793050846340",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"usuarios",
+										"prueba.1793050846340"
+									]
+								}
+							},
+							"status": "Accepted",
+							"code": 202,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 39,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.405Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.444Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"iusuario\": \"prueba.1793050846340\",\n\t\t\t\"nombre\": \"Usuario de prueba Postman (editado)\",\n\t\t\t\"bactivo\": true,\n\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\"iequipoult\": 1,\n\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\"fhult\": \"2026-10-26T21:40:46.438Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 1,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:40:46.385Z\"\n\t\t}\n\t}\n}"
+						}
+					]
+				},
+				{
+					"name": "050-Eliminar usuario",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+									"pm.test(\"encabezado.resultado es true\", function () { pm.expect(pm.response.json().encabezado.resultado).to.eql(true); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/usuarios/{{usuarioPrueba}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"usuarios",
+								"{{usuarioPrueba}}"
+							]
+						},
+						"description": "Elimina un usuario y todas sus sesiones, así que sus tokens dejan de servir. Se usa para quitarle el acceso a alguien de forma definitiva; para quitarlo temporalmente, desactívalo con **040-Modificar usuario**.\n\n**Función:** `API_DELETE_Usuario` · **Ruta:** `DELETE /api/usuarios/{iusuario}`\n\n**Respuestas:** 200 con el usuario eliminado · 401 sin token válido.\n\n**Script de prueba:** valida el 200."
+					},
+					"response": [
+						{
+							"name": "200 Usuario eliminado",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/usuarios/prueba.1793050846340",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"usuarios",
+										"prueba.1793050846340"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 4,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.447Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.451Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"iusuario\": \"prueba.1793050846340\"\n\t\t}\n\t}\n}"
 						}
 					]
 				}
@@ -204,7 +898,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 12,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.342Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.354Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"ilead\": 6,\n\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\"cargo\": \"Jefe de compras\",\n\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\"origen\": \"sitio web\",\n\t\t\t\"iestado\": 1,\n\t\t\t\"observaciones\": \"Lead de ejemplo para Postman: datos sintéticos\",\n\t\t\t\"bactivo\": true,\n\t\t\t\"correos\": [\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t}\n\t\t\t],\n\t\t\t\"mensajes\": [],\n\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\"iequipoult\": 0,\n\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\"fhult\": \"2026-10-26T21:02:51.345Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 0,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:02:51.345Z\"\n\t\t}\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 7,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.462Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.469Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"ilead\": 15,\n\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\"cargo\": \"Jefe de compras\",\n\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\"origen\": \"sitio web\",\n\t\t\t\"iestado\": 1,\n\t\t\t\"observaciones\": \"Lead de ejemplo para Postman: datos sintéticos\",\n\t\t\t\"bactivo\": true,\n\t\t\t\"correos\": [\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 15,\n\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 15,\n\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t}\n\t\t\t],\n\t\t\t\"mensajes\": [],\n\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\"iequipoult\": 1,\n\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\"fhult\": \"2026-10-26T21:40:46.463Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 1,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:40:46.463Z\"\n\t\t}\n\t}\n}"
 						},
 						{
 							"name": "400 Falta el nombre",
@@ -245,7 +939,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 16,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.322Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.338Z\",\n\t\t\"imensaje\": 400040,\n\t\t\"mensaje\": \"No se ha recibido el parámetro 'nombre' en el cuerpo de la petición, por lo cual no ha sido posible procesar su solicitud\"\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 1,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.459Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.460Z\",\n\t\t\"imensaje\": 400040,\n\t\t\"mensaje\": \"No se ha recibido el parámetro 'nombre' en el cuerpo de la petición, por lo cual no ha sido posible procesar su solicitud\"\n\t}\n}"
 						},
 						{
 							"name": "401 Sin token",
@@ -289,7 +983,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 1,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.318Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.319Z\",\n\t\t\"imensaje\": 401020,\n\t\t\"mensaje\": \"No se ha definido el parámetro de autenticación, por favor verifique que esté enviando el header, query o parámetro \\\"authorization\\\"\"\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 1,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.456Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.457Z\",\n\t\t\"imensaje\": 401020,\n\t\t\"mensaje\": \"No se ha definido el parámetro de autenticación, por favor verifique que esté enviando el header, query o parámetro \\\"authorization\\\"\"\n\t}\n}"
 						}
 					]
 				},
@@ -329,13 +1023,13 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{baseUrl}}/leads/6",
+									"raw": "{{baseUrl}}/leads/15",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"leads",
-										"6"
+										"15"
 									]
 								}
 							},
@@ -349,7 +1043,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 3,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.357Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.360Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"ilead\": 6,\n\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\"cargo\": \"Jefe de compras\",\n\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\"origen\": \"sitio web\",\n\t\t\t\"iestado\": 1,\n\t\t\t\"observaciones\": \"Lead de ejemplo para Postman: datos sintéticos\",\n\t\t\t\"bactivo\": true,\n\t\t\t\"correos\": [\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t}\n\t\t\t],\n\t\t\t\"mensajes\": [],\n\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\"iequipoult\": 0,\n\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\"fhult\": \"2026-10-26T21:02:51.345Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 0,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:02:51.345Z\"\n\t\t}\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 3,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.471Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.474Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"ilead\": 15,\n\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\"cargo\": \"Jefe de compras\",\n\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\"origen\": \"sitio web\",\n\t\t\t\"iestado\": 1,\n\t\t\t\"observaciones\": \"Lead de ejemplo para Postman: datos sintéticos\",\n\t\t\t\"bactivo\": true,\n\t\t\t\"correos\": [\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 15,\n\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 15,\n\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t}\n\t\t\t],\n\t\t\t\"mensajes\": [],\n\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\"iequipoult\": 1,\n\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\"fhult\": \"2026-10-26T21:40:46.463Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 1,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:40:46.463Z\"\n\t\t}\n\t}\n}"
 						},
 						{
 							"name": "404 Lead inexistente",
@@ -377,7 +1071,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.362Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.364Z\",\n\t\t\"imensaje\": 404010,\n\t\t\"mensaje\": \"No se ha encontrado el recurso solicitado. No se ha encontrado el información de Lead con identificador [\\\"ilead\\\":\\\"999999999\\\"]\"\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.476Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.478Z\",\n\t\t\"imensaje\": 404010,\n\t\t\"mensaje\": \"No se ha encontrado el recurso solicitado. No se ha encontrado el información de Lead con identificador [\\\"ilead\\\":\\\"999999999\\\"]\"\n\t}\n}"
 						}
 					]
 				},
@@ -435,7 +1129,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 3,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.366Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.369Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"pagina\": 1,\n\t\t\"qregistros\": 1000,\n\t\t\"totalregistros\": 2,\n\t\t\"totalpaginas\": 1,\n\t\t\"datos\": [\n\t\t\t{\n\t\t\t\t\"ilead\": 2,\n\t\t\t\t\"nombre\": \"Prueba tildes ñandú\",\n\t\t\t\t\"empresa\": \"Compañía Ejemplo\",\n\t\t\t\t\"cargo\": \"Jefe de compras\",\n\t\t\t\t\"telefono\": \"\",\n\t\t\t\t\"ciudad\": \"Bogotá\",\n\t\t\t\t\"origen\": \"referido\",\n\t\t\t\t\"iestado\": 1,\n\t\t\t\t\"observaciones\": \"\",\n\t\t\t\t\"bactivo\": true,\n\t\t\t\t\"correos\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 2,\n\t\t\t\t\t\t\"email\": \"tildes@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"ilead\": 6,\n\t\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\t\"cargo\": \"Jefe de compras\",\n\t\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\t\"origen\": \"sitio web\",\n\t\t\t\t\"iestado\": 1,\n\t\t\t\t\"observaciones\": \"Lead de ejemplo para Postman: datos sintéticos\",\n\t\t\t\t\"bactivo\": true,\n\t\t\t\t\"correos\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t\t}\n\t\t\t\t],\n\t\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\t\"iequipoult\": 0,\n\t\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\t\"fhult\": \"2026-10-26T21:02:51.345Z\",\n\t\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\t\"iequipocre\": 0,\n\t\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\t\"fhcre\": \"2026-10-26T21:02:51.345Z\"\n\t\t\t}\n\t\t]\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.480Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.482Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"pagina\": 1,\n\t\t\"qregistros\": 1000,\n\t\t\"totalregistros\": 3,\n\t\t\"totalpaginas\": 1,\n\t\t\"datos\": [\n\t\t\t{\n\t\t\t\t\"ilead\": 2,\n\t\t\t\t\"nombre\": \"Prueba tildes ñandú\",\n\t\t\t\t\"empresa\": \"Compañía Ejemplo\",\n\t\t\t\t\"cargo\": \"Jefe de compras\",\n\t\t\t\t\"telefono\": \"\",\n\t\t\t\t\"ciudad\": \"Bogotá\",\n\t\t\t\t\"origen\": \"referido\",\n\t\t\t\t\"iestado\": 1,\n\t\t\t\t\"observaciones\": \"\",\n\t\t\t\t\"bactivo\": true,\n\t\t\t\t\"correos\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 2,\n\t\t\t\t\t\t\"email\": \"tildes@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"ilead\": 8,\n\t\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\t\"cargo\": \"Gerente de compras\",\n\t\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\t\"origen\": \"sitio web\",\n\t\t\t\t\"iestado\": 2,\n\t\t\t\t\"observaciones\": \"Ya se le envió la propuesta comercial\",\n\t\t\t\t\"bactivo\": true,\n\t\t\t\t\"correos\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 8,\n\t\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 8,\n\t\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t\t}\n\t\t\t\t],\n\t\t\t\t\"iusuarioult\": \"postman\",\n\t\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\t\"iequipoult\": 0,\n\t\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\t\"fhult\": \"2026-10-26T21:19:47.295Z\",\n\t\t\t\t\"iusuariocre\": \"postman\",\n\t\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\t\"iequipocre\": 0,\n\t\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\t\"fhcre\": \"2026-10-26T21:19:33.661Z\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"ilead\": 15,\n\t\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\t\"cargo\": \"Jefe de compras\",\n\t\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\t\"origen\": \"sitio web\",\n\t\t\t\t\"iestado\": 1,\n\t\t\t\t\"observaciones\": \"Lead de ejemplo para Postman: datos sintéticos\",\n\t\t\t\t\"bactivo\": true,\n\t\t\t\t\"correos\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 15,\n\t\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 15,\n\t\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t\t}\n\t\t\t\t],\n\t\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\t\"iequipoult\": 1,\n\t\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\t\"fhult\": \"2026-10-26T21:40:46.463Z\",\n\t\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\t\"iequipocre\": 1,\n\t\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\t\"fhcre\": \"2026-10-26T21:40:46.463Z\"\n\t\t\t}\n\t\t]\n\t}\n}"
 						}
 					]
 				},
@@ -447,8 +1141,9 @@
 							"script": {
 								"type": "text/javascript",
 								"exec": [
+									"const cryptoJs = require(\"crypto-js\");",
 									"const filtro = { pagina: 1, qregistros: 10, orden: { ilead: \"DESC\" } };",
-									"const base64 = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(JSON.stringify(filtro)));",
+									"const base64 = cryptoJs.enc.Base64.stringify(cryptoJs.enc.Utf8.parse(JSON.stringify(filtro)));",
 									"pm.collectionVariables.set(\"filtroLeads\", base64.replace(/\\+/g, \"-\").replace(/\\//g, \"_\").replace(/=+$/, \"\"));"
 								]
 							}
@@ -506,7 +1201,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.371Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.373Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"pagina\": 1,\n\t\t\"qregistros\": 10,\n\t\t\"totalregistros\": 2,\n\t\t\"totalpaginas\": 1,\n\t\t\"datos\": [\n\t\t\t{\n\t\t\t\t\"ilead\": 6,\n\t\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\t\"cargo\": \"Jefe de compras\",\n\t\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\t\"origen\": \"sitio web\",\n\t\t\t\t\"iestado\": 1,\n\t\t\t\t\"observaciones\": \"Lead de ejemplo para Postman: datos sintéticos\",\n\t\t\t\t\"bactivo\": true,\n\t\t\t\t\"correos\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t\t}\n\t\t\t\t],\n\t\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\t\"iequipoult\": 0,\n\t\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\t\"fhult\": \"2026-10-26T21:02:51.345Z\",\n\t\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\t\"iequipocre\": 0,\n\t\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\t\"fhcre\": \"2026-10-26T21:02:51.345Z\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"ilead\": 2,\n\t\t\t\t\"nombre\": \"Prueba tildes ñandú\",\n\t\t\t\t\"empresa\": \"Compañía Ejemplo\",\n\t\t\t\t\"cargo\": \"Jefe de compras\",\n\t\t\t\t\"telefono\": \"\",\n\t\t\t\t\"ciudad\": \"Bogotá\",\n\t\t\t\t\"origen\": \"referido\",\n\t\t\t\t\"iestado\": 1,\n\t\t\t\t\"observaciones\": \"\",\n\t\t\t\t\"bactivo\": true,\n\t\t\t\t\"correos\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 2,\n\t\t\t\t\t\t\"email\": \"tildes@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t]\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.484Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.486Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"pagina\": 1,\n\t\t\"qregistros\": 10,\n\t\t\"totalregistros\": 3,\n\t\t\"totalpaginas\": 1,\n\t\t\"datos\": [\n\t\t\t{\n\t\t\t\t\"ilead\": 15,\n\t\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\t\"cargo\": \"Jefe de compras\",\n\t\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\t\"origen\": \"sitio web\",\n\t\t\t\t\"iestado\": 1,\n\t\t\t\t\"observaciones\": \"Lead de ejemplo para Postman: datos sintéticos\",\n\t\t\t\t\"bactivo\": true,\n\t\t\t\t\"correos\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 15,\n\t\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 15,\n\t\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t\t}\n\t\t\t\t],\n\t\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\t\"iequipoult\": 1,\n\t\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\t\"fhult\": \"2026-10-26T21:40:46.463Z\",\n\t\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\t\"iequipocre\": 1,\n\t\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\t\"fhcre\": \"2026-10-26T21:40:46.463Z\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"ilead\": 8,\n\t\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\t\"cargo\": \"Gerente de compras\",\n\t\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\t\"origen\": \"sitio web\",\n\t\t\t\t\"iestado\": 2,\n\t\t\t\t\"observaciones\": \"Ya se le envió la propuesta comercial\",\n\t\t\t\t\"bactivo\": true,\n\t\t\t\t\"correos\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 8,\n\t\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 8,\n\t\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t\t}\n\t\t\t\t],\n\t\t\t\t\"iusuarioult\": \"postman\",\n\t\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\t\"iequipoult\": 0,\n\t\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\t\"fhult\": \"2026-10-26T21:19:47.295Z\",\n\t\t\t\t\"iusuariocre\": \"postman\",\n\t\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\t\"iequipocre\": 0,\n\t\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\t\"fhcre\": \"2026-10-26T21:19:33.661Z\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"ilead\": 2,\n\t\t\t\t\"nombre\": \"Prueba tildes ñandú\",\n\t\t\t\t\"empresa\": \"Compañía Ejemplo\",\n\t\t\t\t\"cargo\": \"Jefe de compras\",\n\t\t\t\t\"telefono\": \"\",\n\t\t\t\t\"ciudad\": \"Bogotá\",\n\t\t\t\t\"origen\": \"referido\",\n\t\t\t\t\"iestado\": 1,\n\t\t\t\t\"observaciones\": \"\",\n\t\t\t\t\"bactivo\": true,\n\t\t\t\t\"correos\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 2,\n\t\t\t\t\t\t\"email\": \"tildes@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t]\n\t}\n}"
 						}
 					]
 				},
@@ -574,13 +1269,13 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseUrl}}/leads/6",
+									"raw": "{{baseUrl}}/leads/15",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"leads",
-										"6"
+										"15"
 									]
 								}
 							},
@@ -594,7 +1289,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 7,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.375Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.382Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"ilead\": 6,\n\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\"cargo\": \"Gerente de compras\",\n\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\"origen\": \"sitio web\",\n\t\t\t\"iestado\": 2,\n\t\t\t\"observaciones\": \"Ya se le envió la propuesta comercial\",\n\t\t\t\"bactivo\": true,\n\t\t\t\"correos\": [\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t}\n\t\t\t],\n\t\t\t\"mensajes\": [],\n\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\"iequipoult\": 0,\n\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\"fhult\": \"2026-10-26T21:02:51.377Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 0,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:02:51.345Z\"\n\t\t}\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 7,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.488Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.495Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"ilead\": 15,\n\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\"cargo\": \"Gerente de compras\",\n\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\"origen\": \"sitio web\",\n\t\t\t\"iestado\": 2,\n\t\t\t\"observaciones\": \"Ya se le envió la propuesta comercial\",\n\t\t\t\"bactivo\": true,\n\t\t\t\"correos\": [\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 15,\n\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 15,\n\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t}\n\t\t\t],\n\t\t\t\"mensajes\": [],\n\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\"iequipoult\": 1,\n\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\"fhult\": \"2026-10-26T21:40:46.489Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 1,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:40:46.463Z\"\n\t\t}\n\t}\n}"
 						}
 					]
 				},
@@ -635,13 +1330,13 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{baseUrl}}/leads/6/verificar",
+									"raw": "{{baseUrl}}/leads/15/verificar",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"leads",
-										"6",
+										"15",
 										"verificar"
 									]
 								}
@@ -656,7 +1351,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 1,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.385Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.386Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"verificacion\": {\n\t\t\t\"mensajes\": [],\n\t\t\t\"qerrores\": 0,\n\t\t\t\"qwarning\": 0,\n\t\t\t\"qinfos\": 0\n\t\t}\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.497Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.499Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"verificacion\": {\n\t\t\t\"mensajes\": [],\n\t\t\t\"qerrores\": 0,\n\t\t\t\"qwarning\": 0,\n\t\t\t\"qinfos\": 0\n\t\t}\n\t}\n}"
 						}
 					]
 				},
@@ -726,7 +1421,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"ilead\": 935547813\n}",
+									"raw": "{\n\t\"ilead\": 903133951\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -734,13 +1429,13 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseUrl}}/leads/6/duplicar",
+									"raw": "{{baseUrl}}/leads/15/duplicar",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"leads",
-										"6",
+										"15",
 										"duplicar"
 									]
 								}
@@ -755,7 +1450,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 6,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.388Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.394Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"ilead\": 935547813,\n\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\"cargo\": \"Gerente de compras\",\n\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\"origen\": \"sitio web\",\n\t\t\t\"iestado\": 2,\n\t\t\t\"observaciones\": \"Ya se le envió la propuesta comercial\",\n\t\t\t\"bactivo\": true,\n\t\t\t\"correos\": [\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 935547813,\n\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 935547813,\n\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t}\n\t\t\t],\n\t\t\t\"mensajes\": [],\n\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\"iequipoult\": 0,\n\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\"fhult\": \"2026-10-26T21:02:51.392Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 0,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:02:51.392Z\"\n\t\t}\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 5,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.502Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.507Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"ilead\": 903133951,\n\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\"cargo\": \"Gerente de compras\",\n\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\"origen\": \"sitio web\",\n\t\t\t\"iestado\": 2,\n\t\t\t\"observaciones\": \"Ya se le envió la propuesta comercial\",\n\t\t\t\"bactivo\": true,\n\t\t\t\"correos\": [\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 903133951,\n\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 903133951,\n\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t}\n\t\t\t],\n\t\t\t\"mensajes\": [],\n\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\"iequipoult\": 1,\n\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\"fhult\": \"2026-10-26T21:40:46.504Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 1,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:40:46.504Z\"\n\t\t}\n\t}\n}"
 						},
 						{
 							"name": "400 Mismo identificador",
@@ -769,7 +1464,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"ilead\": 6\n}",
+									"raw": "{\n\t\"ilead\": 15\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -777,13 +1472,13 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseUrl}}/leads/6/duplicar",
+									"raw": "{{baseUrl}}/leads/15/duplicar",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"leads",
-										"6",
+										"15",
 										"duplicar"
 									]
 								}
@@ -798,7 +1493,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 1,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.397Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.398Z\",\n\t\t\"imensaje\": 400999,\n\t\t\"mensaje\": \"No se puede duplicar un registro del catálogo de con el mismo identificador\"\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.510Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.512Z\",\n\t\t\"imensaje\": 400999,\n\t\t\"mensaje\": \"No se puede duplicar un registro del catálogo de con el mismo identificador\"\n\t}\n}"
 						}
 					]
 				},
@@ -868,7 +1563,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"ilead\": 992130342\n}",
+									"raw": "{\n\t\"ilead\": 967344350\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -876,13 +1571,13 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseUrl}}/leads/935547813/recodificar",
+									"raw": "{{baseUrl}}/leads/903133951/recodificar",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"leads",
-										"935547813",
+										"903133951",
 										"recodificar"
 									]
 								}
@@ -897,7 +1592,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 4,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.401Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.405Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"ilead\": 992130342,\n\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\"cargo\": \"Gerente de compras\",\n\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\"origen\": \"sitio web\",\n\t\t\t\"iestado\": 2,\n\t\t\t\"observaciones\": \"Ya se le envió la propuesta comercial\",\n\t\t\t\"bactivo\": true,\n\t\t\t\"correos\": [\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 992130342,\n\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 992130342,\n\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t}\n\t\t\t],\n\t\t\t\"mensajes\": [],\n\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\"iequipoult\": 0,\n\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\"fhult\": \"2026-10-26T21:02:51.404Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 0,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:02:51.392Z\"\n\t\t}\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 6,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.514Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.520Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"ilead\": 967344350,\n\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\"cargo\": \"Gerente de compras\",\n\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\"origen\": \"sitio web\",\n\t\t\t\"iestado\": 2,\n\t\t\t\"observaciones\": \"Ya se le envió la propuesta comercial\",\n\t\t\t\"bactivo\": true,\n\t\t\t\"correos\": [\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 967344350,\n\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 967344350,\n\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t}\n\t\t\t],\n\t\t\t\"mensajes\": [],\n\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\"iequipoult\": 1,\n\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\"fhult\": \"2026-10-26T21:40:46.517Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 1,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:40:46.504Z\"\n\t\t}\n\t}\n}"
 						}
 					]
 				},
@@ -937,13 +1632,13 @@
 								"method": "DELETE",
 								"header": [],
 								"url": {
-									"raw": "{{baseUrl}}/leads/992130342",
+									"raw": "{{baseUrl}}/leads/967344350",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"leads",
-										"992130342"
+										"967344350"
 									]
 								}
 							},
@@ -957,7 +1652,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 4,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.408Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.412Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"ilead\": 992130342,\n\t\t\t\"correos\": []\n\t\t}\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 6,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.522Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.528Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"ilead\": 967344350,\n\t\t\t\"correos\": []\n\t\t}\n\t}\n}"
 						},
 						{
 							"name": "400 El lead tiene mensajes",
@@ -965,13 +1660,13 @@
 								"method": "DELETE",
 								"header": [],
 								"url": {
-									"raw": "{{baseUrl}}/leads/6",
+									"raw": "{{baseUrl}}/leads/15",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"leads",
-										"6"
+										"15"
 									]
 								}
 							},
@@ -985,7 +1680,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.577Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.579Z\",\n\t\t\"imensaje\": 400999,\n\t\t\"mensaje\": \"El lead 6 tiene mensajes registrados y no se puede eliminar\"\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 1,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.590Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.591Z\",\n\t\t\"imensaje\": 400999,\n\t\t\"mensaje\": \"El lead 15 tiene mensajes registrados y no se puede eliminar\"\n\t}\n}"
 						}
 					]
 				}
@@ -1061,13 +1756,13 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseUrl}}/leads/6/mensajes",
+									"raw": "{{baseUrl}}/leads/15/mensajes",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"leads",
-										"6",
+										"15",
 										"mensajes"
 									]
 								}
@@ -1082,7 +1777,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 15,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.550Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.565Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"imensaje\": 2,\n\t\t\t\"ilead\": 6,\n\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\"asunto\": \"Propuesta comercial\",\n\t\t\t\"cuerpo\": \"Hola Ana, adjuntamos la propuesta que conversamos.\",\n\t\t\t\"fhenvio\": \"2026-10-26T21:02:51.553Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 0,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:02:51.557Z\"\n\t\t}\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 14,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.563Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.577Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"imensaje\": 11,\n\t\t\t\"ilead\": 15,\n\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\"asunto\": \"Propuesta comercial\",\n\t\t\t\"cuerpo\": \"Hola Ana, adjuntamos la propuesta que conversamos.\",\n\t\t\t\"fhenvio\": \"2026-10-26T21:40:46.567Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 1,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:40:46.568Z\"\n\t\t}\n\t}\n}"
 						},
 						{
 							"name": "400 El email no es del lead",
@@ -1104,13 +1799,13 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseUrl}}/leads/6/mensajes",
+									"raw": "{{baseUrl}}/leads/15/mensajes",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"leads",
-										"6",
+										"15",
 										"mensajes"
 									]
 								}
@@ -1125,7 +1820,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 132,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.415Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.547Z\",\n\t\t\"imensaje\": 400999,\n\t\t\"mensaje\": \"El email del mensaje no es un correo registrado del lead\"\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 31,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.530Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.561Z\",\n\t\t\"imensaje\": 400999,\n\t\t\"mensaje\": \"El email del mensaje no es un correo registrado del lead\"\n\t}\n}"
 						}
 					]
 				},
@@ -1166,13 +1861,13 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{baseUrl}}/leads/6/mensajes",
+									"raw": "{{baseUrl}}/leads/15/mensajes",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"leads",
-										"6",
+										"15",
 										"mensajes"
 									]
 								}
@@ -1187,7 +1882,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.567Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.569Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"pagina\": 1,\n\t\t\"qregistros\": 1000,\n\t\t\"totalregistros\": 1,\n\t\t\"totalpaginas\": 1,\n\t\t\"datos\": [\n\t\t\t{\n\t\t\t\t\"imensaje\": 2,\n\t\t\t\t\"ilead\": 6,\n\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\"asunto\": \"Propuesta comercial\",\n\t\t\t\t\"cuerpo\": \"Hola Ana, adjuntamos la propuesta que conversamos.\",\n\t\t\t\t\"fhenvio\": \"2026-10-26T21:02:51.553Z\",\n\t\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\t\"iequipocre\": 0,\n\t\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\t\"fhcre\": \"2026-10-26T21:02:51.557Z\"\n\t\t\t}\n\t\t]\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 3,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.579Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.582Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"pagina\": 1,\n\t\t\"qregistros\": 1000,\n\t\t\"totalregistros\": 1,\n\t\t\"totalpaginas\": 1,\n\t\t\"datos\": [\n\t\t\t{\n\t\t\t\t\"imensaje\": 11,\n\t\t\t\t\"ilead\": 15,\n\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\"asunto\": \"Propuesta comercial\",\n\t\t\t\t\"cuerpo\": \"Hola Ana, adjuntamos la propuesta que conversamos.\",\n\t\t\t\t\"fhenvio\": \"2026-10-26T21:40:46.567Z\",\n\t\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\t\"iequipocre\": 1,\n\t\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\t\"fhcre\": \"2026-10-26T21:40:46.568Z\"\n\t\t\t}\n\t\t]\n\t}\n}"
 						}
 					]
 				},
@@ -1229,15 +1924,15 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{baseUrl}}/leads/6/mensajes/2",
+									"raw": "{{baseUrl}}/leads/15/mensajes/11",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"leads",
-										"6",
+										"15",
 										"mensajes",
-										"2"
+										"11"
 									]
 								}
 							},
@@ -1251,7 +1946,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.571Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.573Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"imensaje\": 2,\n\t\t\t\"ilead\": 6,\n\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\"asunto\": \"Propuesta comercial\",\n\t\t\t\"cuerpo\": \"Hola Ana, adjuntamos la propuesta que conversamos.\",\n\t\t\t\"fhenvio\": \"2026-10-26T21:02:51.553Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 0,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:02:51.557Z\"\n\t\t}\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 1,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.584Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.585Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"imensaje\": 11,\n\t\t\t\"ilead\": 15,\n\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\"asunto\": \"Propuesta comercial\",\n\t\t\t\"cuerpo\": \"Hola Ana, adjuntamos la propuesta que conversamos.\",\n\t\t\t\"fhenvio\": \"2026-10-26T21:40:46.567Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 1,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:40:46.568Z\"\n\t\t}\n\t}\n}"
 						},
 						{
 							"name": "404 Mensaje inexistente",
@@ -1259,13 +1954,13 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{baseUrl}}/leads/6/mensajes/999999999",
+									"raw": "{{baseUrl}}/leads/15/mensajes/999999999",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"leads",
-										"6",
+										"15",
 										"mensajes",
 										"999999999"
 									]
@@ -1281,7 +1976,130 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.574Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.576Z\",\n\t\t\"imensaje\": 404010,\n\t\t\"mensaje\": \"No se ha encontrado el recurso solicitado. No se ha encontrado el información de LeadMensaje con identificador [\\\"imensaje\\\":\\\"999999999\\\"]\"\n\t}\n}"
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 1,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.587Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.588Z\",\n\t\t\"imensaje\": 404010,\n\t\t\"mensaje\": \"No se ha encontrado el recurso solicitado. No se ha encontrado el información de LeadMensaje con identificador [\\\"imensaje\\\":\\\"999999999\\\"]\"\n\t}\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "060-Cierre de sesión",
+			"description": "Cierra la sesión del token y comprueba que deja de servir. Va al final para que el Runner use el token en todo lo anterior.",
+			"item": [
+				{
+					"name": "010-Cerrar sesión",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+									"pm.test(\"encabezado.resultado es true\", function () { pm.expect(pm.response.json().encabezado.resultado).to.eql(true); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/sesiones/actual",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"sesiones",
+								"actual"
+							]
+						},
+						"description": "Cierra la sesión del token de la petición borrando su fila de `seg_sesiones`; el token deja de servir aunque no haya vencido. Se usa al salir.\n\n**Función:** `SESION_DELETE_HTTP` · **Ruta:** `DELETE /api/sesiones/actual`\n\n**Respuestas:** 200 con `datos.cerrada` en `true` · 401 sin token válido.\n\n**Script de prueba:** valida el 200."
+					},
+					"response": [
+						{
+							"name": "200 Sesión cerrada",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/sesiones/actual",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"sesiones",
+										"actual"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 3,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.593Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.596Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"cerrada\": true\n\t\t}\n\t}\n}"
+						}
+					]
+				},
+				{
+					"name": "020-El token cerrado ya no sirve",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 401\", function () { pm.response.to.have.status(401); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/leads",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"leads"
+							]
+						},
+						"description": "Comprobación del cierre: repite una consulta con el token de la sesión que se acaba de cerrar y espera 401.\n\n**Función:** `API_GET_LIST_Lead` · **Ruta:** `GET /api/leads`\n\n**Respuestas:** 401, porque la sesión ya no existe. Para volver a usar la colección, corre otra vez **020-Sesiones / 010-Iniciar sesión**.\n\n**Script de prueba:** valida el 401."
+					},
+					"response": [
+						{
+							"name": "401 Sesión cerrada",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/leads",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads"
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 1,\n\t\t\"fhentrada\": \"2026-10-26T21:40:46.598Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:40:46.599Z\",\n\t\t\"imensaje\": 401050,\n\t\t\"mensaje\": \"La sesión no existe o ya fue cerrada\"\n\t}\n}"
 						}
 					]
 				}
