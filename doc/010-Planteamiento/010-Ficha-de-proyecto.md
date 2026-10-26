@@ -35,7 +35,7 @@ aliases: [Alcance]
 1. **Lead (`leads`)** con todas las operaciones que trae el controlador de catálogo del paquete base: obtener, insertar, modificar, eliminar, listar (paginado y con filtros), verificar, duplicar y recodificar.
 2. **Correos del lead (`leads_correos`)**, detalle que viaja dentro del lead: se guarda, duplica, recodifica y elimina con él.
 3. **Mensajes enviados (`leads_mensajes`)**, movimiento del lead: se registran, se listan por lead y se consultan uno a uno. No se modifican.
-4. **Autenticación con JWT**: usuarios (`seg_usuarios`), inicio y cierre de sesión (`seg_sesiones`) y validación del token en cada operación. Ver [Seguridad](../040-Procesos/010-Seguridad.md).
+4. **Autenticación con JWT**: usuarios (`seg_usuarios`), inicio y cierre de sesión (`seg_sesiones`) y validación del token en cada operación. `ISW-Leads` inicia sesión con el mismo API y guarda el token en una cookie que el navegador no puede leer. Ver [Seguridad](../040-Procesos/010-Seguridad.md).
 5. **Auditoría del Modelo B** en `leads`, `leads_mensajes` y `seg_usuarios`, llenada desde la sesión del token. Ver [Modelo de datos](../030-Modelado-de-datos/010-Modelo-de-datos.md).
 6. **Base de datos PostgreSQL local**, con el modelo de [Modelo de datos](../030-Modelado-de-datos/010-Modelo-de-datos.md) y los componentes de [Componentes](../020-Arquitectura/020-Componentes.md).
 
@@ -44,7 +44,6 @@ aliases: [Alcance]
 | Qué | Motivo | Queda |
 | --- | --- | --- |
 | Permisos por usuario y seguridad de datos (`segDatosWhere`) | Exigen definir roles, y el alcance de esta fase no los pide: todo usuario con sesión accede a todo (ver los riesgos aceptados en [Seguridad](../040-Procesos/010-Seguridad.md)) | Aplazado |
-| Inicio de sesión en `ISW-Leads` | Se priorizó el servicio; mientras la web no envíe token, sus llamadas al API responden 401 | Aplazado |
 | Consolidar leads | `ISPAzureUtils` 2.0.14 arma el SQL de consolidar solo para MS-SQL (`@@ROWCOUNT`, `UPDATE … FROM … INNER JOIN`) y no tiene variante PostgreSQL; además fusiona los detalles solo por `ilead`, así que perdería los correos del lead origen que el destino no tiene | Aplazado hasta corregir el paquete base |
 | Modificar o anular mensajes | Un movimiento se registra una vez; corregirlo es registrar otro | Fuera |
 | Envío real de correos (SMTP o proveedor) | El alcance pide el registro del mensaje enviado, no el canal de envío (ver D4) | Fuera, a confirmar |

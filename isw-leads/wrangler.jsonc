@@ -1,6 +1,6 @@
 // Worker de Cloudflare que sirve el cliente web de Leads.
 // Nivel superior = producción (rama `main`); entorno `dev` = pruebas (rama `dev`). Detalle en la skill 06.
-// API_URL va como variable del Worker y API_TOKEN como secret (`wrangler secret put API_TOKEN`), nunca aquí.
+// API_URL va como variable del Worker, nunca aquí; el token de cada usuario viaja en su cookie de sesión.
 {
 	"$schema": "./node_modules/wrangler/config-schema.json",
 	"name": "isw-leads",

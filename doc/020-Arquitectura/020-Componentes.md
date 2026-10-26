@@ -16,7 +16,7 @@ El proyecto usa la configuración C (decisión D1 de la [Ficha de proyecto](../0
 
 | Componente | Responsabilidad | Se comunica con |
 | --- | --- | --- |
-| `ISW-Leads` | Cliente web en Astro + Svelte. Entra en esta fase según la decisión D6; todavía no inicia sesión | `ISS-Leads` por HTTP |
+| `ISW-Leads` | Cliente web en Astro + Svelte (decisión D6). Inicia y cierra sesión contra `ISS-Leads`, guarda el token en la cookie `istoken`, que el navegador no puede leer, y llama al API a través de su proxy `/api` | `ISS-Leads` por HTTP, desde su servidor |
 | Postman | Colección que prueba y documenta cada operación del API; inicia sesión y guarda el token | `ISS-Leads` por HTTP |
 | `src/functions/` | Registra las rutas HTTP, instancia el controlador y delega. No tiene lógica de negocio | Controladores |
 | `TSistemaLeads` | Clase intermedia abstracta: exige el JWT en cada operación y estampa la auditoría del Modelo B | `TSesionController` |
@@ -35,7 +35,7 @@ El proyecto usa la configuración C (decisión D1 de la [Ficha de proyecto](../0
 | Sistema | Dirección y protocolo | Contrato y versión | Autenticación | Ante falla | Restricciones |
 | --- | --- | --- | --- | --- | --- |
 | PostgreSQL 18 local | `ISS-Leads` → BD, driver `pg` vía `ISPBDSQL` (`DB_ENGINE=PG`) | [Modelo de datos](../030-Modelado-de-datos/010-Modelo-de-datos.md) | Usuario y clave de la BD en `local.settings.json`, no versionado | La operación responde 500 con `RstError`; cada escritura corre en una transacción, así que no queda nada a medias | Solo ambiente local |
-| Consumidores (`ISW-Leads`, Postman) | Consumidor → `ISS-Leads`, HTTP REST con JSON | [Colección de Postman](../999-Adjuntos/020-Ejemplos/010-ISS-Leads.postman_collection.json) y su [ambiente local](../999-Adjuntos/020-Ejemplos/020-ISS-Leads-Local.postman_environment.json) | Header `Authorization: Bearer <JWT>` que emite el inicio de sesión y valida `TSistemaLeads` (ver [Seguridad](../040-Procesos/010-Seguridad.md)) | El consumidor recibe la respuesta estándar de `ISPServer` con el código y el mensaje del error; sin token válido, `401` | Cualquier usuario con sesión accede a todo: no hay roles en esta fase |
+| Consumidores (`ISW-Leads`, Postman) | Consumidor → `ISS-Leads`, HTTP REST con JSON | [Colección de Postman](../999-Adjuntos/020-Ejemplos/010-ISS-Leads.postman_collection.json) y su [ambiente local](../999-Adjuntos/020-Ejemplos/020-ISS-Leads-Local.postman_environment.json) | Header `Authorization: Bearer <JWT>` que emite el inicio de sesión y valida `TSistemaLeads`; la web lo arma en su servidor con la cookie `istoken` (ver [Seguridad](../040-Procesos/010-Seguridad.md)) | El consumidor recibe la respuesta estándar de `ISPServer` con el código y el mensaje del error; sin token válido, `401`, y la web lleva al usuario a `/login` con la ruta en la que estaba | Cualquier usuario con sesión accede a todo: no hay roles en esta fase |
 
 ## Dependencias
 

@@ -1,6 +1,6 @@
 ---
 import { val2Int } from "@ingenieria_insoft/ispgen";
-import Layout from "$layouts/Layout.astro";
+import UsuarioInSoft from "$layouts/UsuarioInSoft.astro";
 import Mensajes from "$views/leads/Mensajes.svelte";
 
 export const prerender = false;
@@ -8,6 +8,6 @@ export const prerender = false;
 const ilead: number = val2Int(Astro.params.ilead);
 ---
 
-<Layout title={`Mensajes del lead ${ilead}`}>
+<UsuarioInSoft title={`Mensajes del lead ${ilead}`}>
 	<Mensajes client:only="svelte" ilead={ilead} />
-</Layout>
+</UsuarioInSoft>

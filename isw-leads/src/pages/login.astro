@@ -1,0 +1,15 @@
+---
+import { rutaDeRetorno } from "$lib/1.api/Leads_Sesion";
+import Layout from "$layouts/Layout.astro";
+import Login from "$views/sesion/Login.svelte";
+
+export const prerender = false;
+
+const volver: string = rutaDeRetorno(Astro.url.searchParams.get("volver"), Astro.url.origin);
+// Quien ya tiene sesión no ve el formulario: vuelve a donde iba
+if (Astro.locals.sesion) return Astro.redirect(volver);
+---
+
+<Layout title="Inicia sesión">
+	<Login client:only="svelte" volver={volver} />
+</Layout>

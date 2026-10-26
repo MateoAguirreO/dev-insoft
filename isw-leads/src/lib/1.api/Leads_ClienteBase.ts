@@ -3,7 +3,7 @@ import {
 	TAuthError, TControllerClient, TError, TServerError, val2JSON, val2Str,
 	type ServiciosInSoft, type TInfoConnection, type TJSONObject, type TObject, type TReqResponse
 } from "@ingenieria_insoft/ispgen";
-import { MensajesError, RutaProxyApi, TimeoutPeticion } from "$lib/const";
+import { MensajesError, RutaLogin, RutaProxyApi, TimeoutPeticion } from "$lib/const";
 
 // list() codifica el filtro en base64url con ISEncrypt, que en el navegador implementa ispclientjs
 prepareEncrypt();
@@ -41,11 +41,15 @@ export abstract class TLeadsBaseClient<T extends TObject> extends TControllerCli
 		return ruta;
 	}
 
-	// Todo 2xx es éxito (el API responde 201 al crear y 202 al modificar). Los errores de infraestructura
-	// se cambian por textos claros; los 400 y 404 conservan el mensaje del servicio
+	// Todo 2xx es éxito (el API responde 201 al crear y 202 al modificar). Un 401 es la sesión que terminó:
+	// se vuelve al inicio de sesión con la ruta actual. Los 400 y 404 conservan el mensaje del servicio
 	protected verifyResponse(res: TReqResponse): boolean {
 		if (res.statusCode === 0) throw new TError(MensajesError.sinConexion);
-		if (res.statusCode === 401 || res.statusCode === 403) throw new TAuthError(MensajesError.sinAutorizacion);
+		if (res.statusCode === 401) {
+			window.location.assign(`${RutaLogin}?volver=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+			throw new TAuthError(MensajesError.sesionVencida);
+		}
+		if (res.statusCode === 403) throw new TAuthError(MensajesError.sinAutorizacion);
 		if (res.statusCode === 503) throw new TServerError(MensajesError.apiNoDisponible);
 		if (res.statusCode >= 500) throw new TServerError(MensajesError.servidor);
 		if (res.statusCode >= 200 && res.statusCode < 300) {

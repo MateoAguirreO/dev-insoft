@@ -4,5 +4,3 @@
 # URL base del API de Leads (ISS-Leads). Si no se define, se usa http://localhost:7071/api
 API_URL=http://localhost:7071/api
 
-# Token que se envía como "Authorization: Bearer <token>". Vacío = no se envía el header.
-API_TOKEN=

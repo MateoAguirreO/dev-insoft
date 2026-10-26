@@ -23,7 +23,7 @@ La validación vive en una sola clase, `TSistemaLeads` (ver [Componentes](../020
 
 ## El token es la llave de una sesión guardada en la BD
 
-**Transporte:** header `Authorization: Bearer <token>`.
+**Transporte:** header `Authorization: Bearer <token>`. En la web, el token viaja del navegador al servidor de `ISW-Leads` en la cookie `istoken`, y ese servidor arma el header.
 
 **Encabezado:** `{ "alg": "HS256", "typ": "JWT" }`, firmado con la llave `JWT_SECRET`.
 
@@ -32,7 +32,7 @@ La validación vive en una sola clase, `TSistemaLeads` (ver [Componentes](../020
 | Claim | Tipo | Contenido |
 | --- | --- | --- |
 | `usuario` | `string` (máx. 30) | Usuario que inició sesión, en minúscula |
-| `iapp` | `keyof typeof TIS_IApp` | Aplicación desde la que inició sesión; por defecto `IAppOther` |
+| `iapp` | `keyof typeof TIS_IApp` | Aplicación desde la que inició sesión; por defecto `IAppOther`, y `WebLogin` desde `ISW-Leads` |
 | `iequipo` | `number` | Equipo desde el que inició sesión; por defecto 0 |
 | `jti` | `string` | `isesion` de la fila de `seg_sesiones` |
 | `iat`, `exp` | `number` (segundos Unix) | Emisión y vencimiento, 8 horas después |
@@ -64,6 +64,27 @@ La auditoría de cada registro toma el usuario, la aplicación y el equipo de es
 
 El API no tiene registro público: crear un usuario exige token. En una BD nueva, el primer usuario se crea con una sesión temporal que el desarrollador abre directo en `seg_sesiones` y borra después.
 
+## La web guarda el token en una cookie que el navegador no puede leer
+
+`ISW-Leads` no llama a `ISS-Leads` desde el navegador. Lo hace su servidor (SSR en el Worker de Cloudflare), que es el único que conoce el token: el JavaScript de la página nunca lo recibe, así que un script inyectado no lo puede robar.
+
+| Pieza | Qué hace |
+| --- | --- |
+| `POST /api/sesion` | Abre la sesión en `ISS-Leads` con el usuario, la clave y `iapp` `WebLogin`, y guarda el token en la cookie `istoken`. Al navegador solo le responde el usuario y el vencimiento |
+| Cookie `istoken` | `HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/` y el mismo vencimiento de la sesión. El token no pasa por `localStorage` ni por `document.cookie` |
+| `src/middleware.ts` | Lista explícita de rutas privadas: `/leads` y todo lo que cuelga de ella. Sin sesión vigente redirige a `/login?volver=<ruta>`, y borra la cookie si el token venció o no se puede leer |
+| `/login` | Pública. Quien ya tiene sesión vuelve a su ruta sin ver el formulario |
+| Proxy `/api/leads…` | Arma el header `Authorization: Bearer` con la cookie. Sin cookie responde `401` sin llamar al API y sin redirigir; si el API responde `401`, borra la cookie |
+| `DELETE /api/sesion` | Cierra la sesión en `ISS-Leads` y borra la cookie, aunque el API no responda |
+
+Tres reglas cierran los huecos habituales de este esquema:
+
+- **La ruta de retorno solo puede ser del mismo sitio.** Se acepta si `new URL(volver, origen).origin === origen`. Revisar que empiece por `/` no basta, porque `//dominio` y `/\dominio` también salen del sitio. Tampoco se vuelve a `/login` ni a `/api/`.
+- **Las escrituras desde otro origen responden `403`**, en el proxy y en `/api/sesion`, además de lo que ya bloquea `SameSite=Strict`.
+- **El middleware no verifica la firma del token**: solo lee el usuario y el vencimiento para decidir la redirección y mostrar quién tiene la sesión. `JWT_SECRET` vive solo en `ISS-Leads` y los datos llegan siempre por el API, que sí verifica la firma; una cookie falsificada solo deja ver la página vacía.
+
+Si el API responde `401` en medio del uso, porque la sesión venció o se cerró desde otro lado, el navegador vuelve a `/login` con la ruta en la que estaba.
+
 ## La clave nunca se guarda ni se entrega en texto plano
 
 - Se guarda como hash **scrypt** con sal propia de 16 bytes, en el formato `scrypt$<sal>$<hash>` (Base64URL). SHA-256 se descartó porque es rápido y sin sal: si la tabla se filtra, las claves se prueban por fuerza bruta y dos claves iguales dan el mismo hash.
@@ -90,6 +111,7 @@ El API no tiene registro público: crear un usuario exige token. En una BD nueva
 | Llave de firma del JWT (`JWT_SECRET`) | `local.settings.json` de `ISS-Leads` en local; Application Settings de la Function App al desplegar | Desarrollador en local; *Pendiente · Líder técnico* al desplegar |
 | Token de npm para `@ingenieria_insoft/*` | `.npmrc` del usuario o de cada pieza, nunca en el repositorio | Líder técnico |
 | Usuario, clave y token de Postman | *Current value* del ambiente `020-ISS-Leads-Local`; el archivo exportado los lleva vacíos | Cada desarrollador |
+| Token de la sesión de cada usuario de la web | Cookie `istoken` del navegador (`HttpOnly`, `Secure`, `SameSite=Strict`); solo la lee el servidor de `ISW-Leads` | Cambia en cada inicio de sesión; vence a las 8 horas o al cerrar sesión |
 
 Rotar `JWT_SECRET` invalida todos los tokens emitidos: cada usuario debe iniciar sesión de nuevo.
 
