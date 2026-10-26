@@ -9,5 +9,11 @@ CREATE TABLE IF NOT EXISTS leads_mensajes (
     cuerpo          text         NULL,
     fhenvio         timestamptz  NULL,
 
+    iusuariocre     varchar(30)  NULL,
+    iappcre         varchar(20)  NULL,
+    iequipocre      int          NULL,
+    ipcre           varchar(20)  NULL,
+    fhcre           timestamptz  NULL,
+
     CONSTRAINT pk_leads_mensajes PRIMARY KEY (imensaje)
 );

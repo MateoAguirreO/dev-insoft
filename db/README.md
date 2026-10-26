@@ -1,6 +1,6 @@
 # Base de datos de Leads
 
-Scripts DDL de PostgreSQL 18 para la base de datos `leads` (esquema `public`). Ninguna tabla lleva columnas de auditoría: es una decisión del proyecto, registrada en `doc/990-Deudas-tecnicas.md`.
+Scripts DDL de PostgreSQL 18 para la base de datos `leads` (esquema `public`). Las tablas de datos y de movimiento llevan la auditoría del Modelo B (usuario único) de la skill `diseno-bd`; las de detalle no llevan.
 
 | Archivo | Contenido |
 | --- | --- |
@@ -8,7 +8,9 @@ Scripts DDL de PostgreSQL 18 para la base de datos `leads` (esquema `public`). N
 | `schema/010_leads.sql` | Tabla `leads` (datos) |
 | `schema/020_leads_correos.sql` | Tabla `leads_correos` (detalle de `leads`) |
 | `schema/030_leads_mensajes.sql` | Tabla `leads_mensajes` (movimiento de `leads`) |
-| `schema/040_secuencias.sql` | Secuencias `seq_leads` y `seq_leads_mensajes` |
+| `schema/040_secuencias.sql` | Secuencias `seq_leads`, `seq_leads_mensajes` y `seq_seg_sesiones` |
+| `schema/050_seg_usuarios.sql` | Tabla `seg_usuarios` (datos): usuarios del API con la clave en hash scrypt |
+| `schema/060_seg_sesiones.sql` | Tabla `seg_sesiones` (movimiento): una fila por inicio de sesión, identificada en el JWT |
 
 Sin llaves foráneas, sin `serial` ni `IDENTITY`: el controlador valida las relaciones y asigna las llaves con `NEXTVAL` de las secuencias.
 
