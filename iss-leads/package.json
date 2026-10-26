@@ -13,11 +13,11 @@
 	},
 	"dependencies": {
 		"@azure/functions": "^4.x",
-		"@ingenieria_insoft/ispazureutils": "^2.x",
-		"@ingenieria_insoft/ispbdsql": "^2.x",
 		"@ingenieria_insoft/ispgen": "^2.x",
 		"@ingenieria_insoft/ispnodejs": "^2.x",
-		"@ingenieria_insoft/ispserver": "^2.x"
+		"@ingenieria_insoft/ispserver": "^2.x",
+		"@ingenieria_insoft/ispbdsql": "^2.x",
+		"@ingenieria_insoft/ispazureutils": "^2.x"
 	},
 	"devDependencies": {
 		"typescript": "^7.x"
