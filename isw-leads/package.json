@@ -1,0 +1,39 @@
+{
+	"name": "isw-leads",
+	"type": "module",
+	"version": "0.0.1",
+	"description": "Cliente web de Leads: listado, ficha con correos y registro de mensajes enviados a cada lead",
+	"scripts": {
+		"deploy": "npm update && npm run iconify && npm run build && npm version patch --no-git-tag-version && npm run git",
+		"dev": "astro dev",
+		"iconify": "node ./config/downloadIconify.js",
+		"build": "astro build",
+		"preview": "npm run build && astro preview",
+		"check": "npm run test && astro check",
+		"astro": "astro",
+		"git": "git add -A && git commit && git push -u origin main",
+		"test": "npx oxlint@latest src"
+	},
+	"dependencies": {
+		"@astrojs/cloudflare": "^12.x",
+		"@astrojs/svelte": "^7.x",
+		"@ingenieria_insoft/ispclientjs": "^2.x",
+		"@ingenieria_insoft/ispgen": "^2.x",
+		"@ingenieria_insoft/ispsveltecomponents": "^2.x",
+		"@tailwindcss/vite": "^4.x",
+		"svelte": "^5.x",
+		"tailwindcss": "^4.x"
+	},
+	"devDependencies": {
+		"@astrojs/check": "^0.x",
+		"@astrojs/ts-plugin": "^1.x",
+		"astro": "^5.x",
+		"typescript": "^5.x",
+		"wrangler": "^4.x"
+	},
+	"overrides": {
+		"@astrojs/cloudflare": {
+			"wrangler": "$wrangler"
+		}
+	}
+}

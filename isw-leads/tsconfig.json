@@ -1,0 +1,29 @@
+{
+	"extends": "astro/tsconfigs/strict",
+	"compilerOptions": {
+		"target": "ES2022",
+		"moduleResolution": "bundler",
+		"skipLibCheck": true,
+		"verbatimModuleSyntax": true,
+		"strict": true,
+		"noEmit": true,
+		"isolatedModules": true,
+		"plugins": [
+			{
+				"name": "@astrojs/ts-plugin"
+			}
+		],
+		"paths": {
+			"$components/*": ["./src/components/*"],
+			"$lib/*": ["./src/lib/*"],
+			"$pages/*": ["./src/pages/*"],
+			"$views/*": ["./src/components/views/*"],
+			"$layouts/*": ["./src/layouts/*"],
+			"$assets/*": ["./src/assets/*"],
+			"$styles/*": ["./src/styles/*"]
+		},
+		"types": ["svelte", "astro/client"]
+	},
+	"include": [".astro/types.d.ts", "**/*"],
+	"exclude": ["dist", "node_modules"]
+}

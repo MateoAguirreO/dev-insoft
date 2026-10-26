@@ -1,0 +1,21 @@
+# Dependencias y compilación
+node_modules/
+dist/
+
+# Configuración local con secretos: nunca se versiona
+local.settings.json
+.env
+.env.*
+.npmrc*
+
+# Logs
+*.log
+npm-debug.log*
+
+# Artefactos de Azure Functions y Azurite
+bin
+obj
+appsettings.json
+__blobstorage__
+__queuestorage__
+__azurite_db*__.json

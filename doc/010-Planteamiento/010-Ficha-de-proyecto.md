@@ -40,9 +40,9 @@ aliases: [Alcance]
 
 | Qué | Motivo | Queda |
 | --- | --- | --- |
-| Validar firma y vigencia del JWT, login y emisión de tokens | El alcance pide solo la definición del token | Aplazado |
-| Permisos por usuario y seguridad de datos (`segDatosWhere`) | Sin autenticación no hay identidad confiable sobre la cual filtrar | Aplazado |
-| Auditoría de registros (usuario, aplicación, equipo, IP y fecha de creación o modificación) | Decisión del proyecto: no se trabaja con datos de auditoría | Fuera |
+| Validar firma y vigencia del JWT, login y emisión de tokens | Se registra como deuda técnica DT2 en [Deudas técnicas](../990-Deudas-tecnicas.md) | Aplazado |
+| Permisos por usuario y seguridad de datos (`segDatosWhere`) | Se registra como deuda técnica DT2 en [Deudas técnicas](../990-Deudas-tecnicas.md), junto con la autenticación | Aplazado |
+| Auditoría de registros (usuario, aplicación, equipo, IP y fecha de creación o modificación) | Se registra como deuda técnica DT1 en [Deudas técnicas](../990-Deudas-tecnicas.md) | Aplazado |
 | Consolidar leads | `ISPAzureUtils` 2.0.14 arma el SQL de consolidar solo para MS-SQL (`@@ROWCOUNT`, `UPDATE … FROM … INNER JOIN`) y no tiene variante PostgreSQL; además fusiona los detalles solo por `ilead`, así que perdería los correos del lead origen que el destino no tiene | Aplazado hasta corregir el paquete base |
 | Modificar o anular mensajes | Un movimiento se registra una vez; corregirlo es registrar otro | Fuera |
 | Envío real de correos (SMTP o proveedor) | El alcance pide el registro del mensaje enviado, no el canal de envío (ver D4) | Fuera, a confirmar |
@@ -75,8 +75,8 @@ aliases: [Alcance]
 | D2 | Qué tablas acompañan al lead en duplicar, recodificar y eliminar | Todas · Solo correos | Duplicar copia lead y correos, no mensajes (son historia del original). Recodificar mueve las tres tablas. Eliminar se rechaza si el lead tiene mensajes | Líder técnico | Propuesta |
 | D3 | Llave de `leads` y `leads_mensajes` | `bigint` secuencial · código `varchar` | `bigint` que asigna el controlador con `nextVal` de `ISPBDSQL` sobre las secuencias `seq_leads` y `seq_leads_mensajes` | Líder técnico | Propuesta |
 | D4 | ¿El servicio envía los correos? | Solo registro · integración de envío | Solo registro | Líder del proyecto | Propuesta |
-| D5 | Nombre de las piezas | `iss-inventario` / `isw-inventario` (carpetas actuales) · `ISS-Leads` / `ISW-Leads` | `ISS-Leads` / `ISW-Leads`: el servicio se nombra por su entidad | Líder técnico | Propuesta |
-| D6 | ¿El cliente web `ISW-Leads` entra en esta fase? | Sí · No | *Pendiente · Líder del proyecto* | Líder del proyecto | Abierta |
+| D5 | Nombre de las piezas | `iss-inventario` / `isw-inventario` · `iss-leads` / `isw-leads` | **`iss-leads` / `isw-leads`**: el servicio se nombra por su entidad; las carpetas ya se renombraron | Líder técnico | Aprobada |
+| D6 | ¿El cliente web `ISW-Leads` entra en esta fase? | Sí · No | **Sí**: se pidió empezar a codificar el cliente `ISW-Leads` | Líder del proyecto | Aprobada |
 
 ## Referencias
 

@@ -26,14 +26,14 @@ El proyecto usa la configuración C (decisión D1 de la [Ficha de proyecto](../0
 | PostgreSQL 18                          | Guarda `leads`, `leads_correos` y `leads_mensajes`                                                                          | —                           |
 |                                        |                                                                                                                             |                             |
 
-`TLeadController` y `TLeadMensajeController` extienden directamente `TControllerServer`: sin auditoría ni seguridad no hay lógica común que justifique una clase abstracta intermedia.
+`TLeadController` y `TLeadMensajeController` extienden directamente `TControllerServer`: sin auditoría ni autenticación (ver [Deudas técnicas](../990-Deudas-tecnicas.md)) no hay lógica común que justifique una clase abstracta intermedia.
 
 ## Integraciones
 
 | Sistema | Dirección y protocolo | Contrato y versión | Autenticación | Ante falla | Restricciones |
 | --- | --- | --- | --- | --- | --- |
 | PostgreSQL 18 local | `ISS-Leads` → BD, driver `pg` vía `ISPBDSQL` (`DB_ENGINE=PG`) | [Modelo de datos](../030-Modelado-de-datos/010-Modelo-de-datos.md) | Usuario y clave de la BD en `local.settings.json`, no versionado | La operación responde 500 con `RstError`; cada escritura corre en una transacción, así que no queda nada a medias | Solo ambiente local |
-| Consumidores (`ISW-Leads`, Postman) | Consumidor → `ISS-Leads`, HTTP REST con JSON | Colección de Postman (*Pendiente · Desarrollador*) | Header `Authorization: Bearer <JWT>`, que no se valida (ver [Seguridad](../040-Procesos/010-Seguridad.md)) | El consumidor recibe la respuesta estándar de `ISPServer` con el código y el mensaje del error | Sin control de acceso en esta fase |
+| Consumidores (`ISW-Leads`, Postman) | Consumidor → `ISS-Leads`, HTTP REST con JSON | Colección de Postman (*Pendiente · Desarrollador*) | Header `Authorization: Bearer <JWT>`, que no se valida (ver [Seguridad](../040-Procesos/010-Seguridad.md)) | El consumidor recibe la respuesta estándar de `ISPServer` con el código y el mensaje del error | Sin control de acceso en esta fase (ver [Deudas técnicas](../990-Deudas-tecnicas.md)) |
 
 ## Dependencias
 

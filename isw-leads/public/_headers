@@ -1,0 +1,27 @@
+# Cabeceras de los archivos estáticos que sirve Cloudflare antes de invocar al Worker.
+#
+# Las reglas se evalúan de arriba abajo y todas las que coinciden se aplican, pero los
+# valores no se reemplazan: se acumulan separados por comas. Sin hacer nada, un archivo de
+# `/_astro` acabaría con `max-age=86400, max-age=31536000`, y el navegador se queda con el
+# primero, que es justo el que no queremos. Por eso cada excepción empieza por
+# `! Cache-Control`, que borra lo que haya puesto la regla general antes de escribir la suya.
+#
+# Este archivo lo procesa Cloudflare y no se publica como un archivo más: pedirlo da 404.
+
+# Resto de estáticos públicos (imágenes, etc.): pueden cambiar de contenido sin cambiar de
+# nombre, así que sin `immutable`. Al vencer, el navegador revalida en vez de descargar todo.
+/*
+  Cache-Control: public, max-age=86400
+
+# Los archivos que genera el build llevan el hash del contenido en el nombre, así que un
+# cambio produce un nombre nuevo y el anterior deja de pedirse: se pueden guardar un año sin
+# revalidar.
+/_astro/*
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+
+# Los íconos de Iconify no llevan hash, pero su nombre identifica el dibujo y su contenido
+# no cambia una vez descargados. Mismo caché de un año.
+/icons/*
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable

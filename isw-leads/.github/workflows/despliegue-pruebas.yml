@@ -1,0 +1,57 @@
+# .github/workflows/despliegue-pruebas.yml — publica el ISW en el Worker de pruebas (entorno `dev`) con cada push a `dev`.
+# Mismos secrets que producción; es otro Worker, así que nada de lo que pase aquí toca producción.
+name: Despliegue a pruebas
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+# Grupo distinto del de producción: un despliegue de pruebas no espera ni cancela uno de producción.
+concurrency:
+  group: despliegue-pruebas
+  cancel-in-progress: true
+
+jobs:
+  construir_y_publicar:
+    runs-on: ubuntu-latest
+    name: Construir y publicar
+    permissions:
+      contents: read # necesario para actions/checkout
+
+    steps:
+      - name: Traer el repositorio
+        uses: actions/checkout@v7.0.1
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "latest"
+          registry-url: "https://registry.npmjs.org"
+          scope: "@ingenieria_insoft"
+
+      # Cuando el lock cambia, la llave exacta no coincide: `restore-keys` trae el cache anterior.
+      - name: Cache de dependencias
+        uses: actions/cache@v6.1.0
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      # `npm ci` instala exactamente lo que dice package-lock.json, sin resolver versiones.
+      - name: Instalar dependencias
+        run: npm ci --no-audit --no-fund
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Construir
+        run: npm run build
+
+      # `--env dev` publica el Worker de pruebas declarado en wrangler.jsonc.
+      - name: Publicar en Cloudflare Workers
+        uses: cloudflare/wrangler-action@v4.0.0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --env dev

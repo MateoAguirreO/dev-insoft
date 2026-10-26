@@ -1,0 +1,29 @@
+// Worker de Cloudflare que sirve el cliente web de Leads.
+// Nivel superior = producción (rama `main`); entorno `dev` = pruebas (rama `dev`). Detalle en la skill 06.
+// API_URL va como variable del Worker y API_TOKEN como secret (`wrangler secret put API_TOKEN`), nunca aquí.
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "isw-leads",
+	"main": "./dist/_worker.js/index.js",
+	"compatibility_date": "2026-10-01",
+	// Astro y varias dependencias usan APIs de Node en el servidor.
+	"compatibility_flags": ["nodejs_compat"],
+	"assets": {
+		"binding": "ASSETS",
+		"directory": "./dist"
+	},
+	"observability": {
+		"enabled": true
+	},
+	"workers_dev": true,
+	"env": {
+		// Otro Worker, con su propia dirección y variables: nada de lo que pase aquí toca producción.
+		"dev": {
+			"name": "isw-leads-dev",
+			"observability": {
+				"enabled": true
+			},
+			"workers_dev": true
+		}
+	}
+}

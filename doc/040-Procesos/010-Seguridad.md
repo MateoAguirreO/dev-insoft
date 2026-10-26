@@ -10,7 +10,7 @@ aliases: [JWT]
 
 ## En esta fase el servicio no autentica ni autoriza
 
-Cualquier petición que llegue a `ISS-Leads` se atiende, traiga o no token. No hay login, permisos ni filtros de seguridad de datos; queda fuera de alcance según la [Ficha de proyecto](../010-Planteamiento/010-Ficha-de-proyecto.md).
+Cualquier petición que llegue a `ISS-Leads` se atiende, traiga o no token. No hay login, permisos ni filtros de seguridad de datos: es la deuda técnica DT2 de [Deudas técnicas](../990-Deudas-tecnicas.md).
 
 ## El JWT se define ahora para no cambiar el contrato después
 
@@ -62,4 +62,5 @@ Ejemplo con datos sintéticos:
 
 | Riesgo | Por qué se acepta | Aprueba |
 | --- | --- | --- |
-| El API no tiene control de acceso: quien alcance el servicio puede leer y escribir leads | Solo corre en el equipo local y con datos sintéticos | *Pendiente · Líder técnico* |
+| El API no tiene control de acceso (deuda técnica DT2 en [Deudas técnicas](../990-Deudas-tecnicas.md)) | Solo corre en el equipo local y con datos sintéticos | *Pendiente · Líder técnico* |
+| Los cambios sobre datos personales no dejan registro de autoría (deuda técnica DT1 en [Deudas técnicas](../990-Deudas-tecnicas.md)) | Solo corre en el equipo local y con datos sintéticos | *Pendiente · Líder técnico* |

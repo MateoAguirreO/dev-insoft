@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "040-Procesos/010-Seguridad.md",
+                "file": "030-Modelado-de-datos/010-Modelo-de-datos.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "010-Seguridad"
+              "title": "010-Modelo-de-datos"
             }
           }
         ]
@@ -99,7 +99,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "040-Procesos/010-Seguridad.md",
+                "file": "030-Modelado-de-datos/010-Modelo-de-datos.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -118,7 +118,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "040-Procesos/010-Seguridad.md",
+                "file": "030-Modelado-de-datos/010-Modelo-de-datos.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
@@ -161,7 +161,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "040-Procesos/010-Seguridad.md",
+                "file": "030-Modelado-de-datos/010-Modelo-de-datos.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -190,22 +190,23 @@
   },
   "active": "614f5b2374cbfd13",
   "lastOpenFiles": [
+    "990-Deudas-tecnicas.md",
+    "040-Procesos/010-Seguridad.md",
+    "README.md.tmp.21920.9b8bd888d47b",
+    "sedgvsNLn",
+    "sed98jK2l",
+    "sedO5HzxH",
+    "040-Procesos/sed8Vfuq8",
+    "030-Modelado-de-datos/sedNDFlA4",
+    "020-Arquitectura/sedr83YFA",
+    "010-Planteamiento/sedzme7T8",
+    "seduDc3fa",
+    "020-Arquitectura/020-Componentes.md.tmp.21920.07fd3d7a5809",
     "030-Modelado-de-datos/010-Modelo-de-datos.md",
     "020-Arquitectura/020-Componentes.md",
     "010-Planteamiento/010-Ficha-de-proyecto.md",
     "README.md",
-    "README.md.tmp.21920.a4c478f5d078",
-    "040-Procesos/010-Seguridad.md",
-    "040-Procesos",
-    "020-Arquitectura",
-    "030-Modelado-de-datos",
-    "010-Planteamiento/010-Ficha-de-proyecto.md.tmp.21920.9c0ae602d67e",
-    "010-Planteamiento",
-    "999-Adjuntos/010-Diagramas/020-Componentes-Leads.svg.tmp.21920.1c18aca2efa5",
-    "999-Adjuntos/010-Diagramas/020-Componentes-Leads.svg.tmp.21920.3296992507c2",
     "999-Adjuntos/010-Diagramas/020-Componentes-Leads.svg",
-    "999-Adjuntos/010-Diagramas/010-DER-Leads.svg.tmp.21920.853f7d7f79e9",
-    "999-Adjuntos/010-Diagramas/010-DER-Leads.svg",
-    "999-Adjuntos/010-Diagramas"
+    "999-Adjuntos/010-Diagramas/010-DER-Leads.svg"
   ]
 }

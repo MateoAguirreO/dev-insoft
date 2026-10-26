@@ -1,0 +1,23 @@
+# Salida del build y tipos generados
+dist/
+.astro/
+
+# Dependencias
+node_modules/
+
+# Variables de entorno locales: API_URL y API_TOKEN viven aquí y nunca se versionan
+.env
+.env.*
+.dev.vars
+
+# Cloudflare Wrangler
+.wrangler/
+
+# Credenciales de npm: en local van en el ~/.npmrc del usuario; en CI las pone actions/setup-node
+.npmrc
+
+# Logs y sistema operativo
+logs
+*.log
+npm-debug.log*
+.DS_Store

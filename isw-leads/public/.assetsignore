@@ -1,0 +1,5 @@
+# Archivos que Cloudflare NO debe publicar como estáticos: son el Worker en sí y el
+# mapa de rutas que genera el adaptador para Cloudflare Pages (aquí se despliega sobre
+# Workers, donde el enrutamiento lo resuelve `assets` + el Worker).
+_worker.js
+_routes.json

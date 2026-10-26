@@ -12,7 +12,7 @@ aliases: [DER]
 
 ## Cada tabla tiene un tipo y ninguna lleva auditoría
 
-El tipo dice cómo se comporta la tabla; por decisión del proyecto ninguna lleva columnas de auditoría (ver [Ficha de proyecto](../010-Planteamiento/010-Ficha-de-proyecto.md)).
+El tipo dice cómo se comporta la tabla; por decisión del proyecto ninguna lleva columnas de auditoría, y eso es la deuda técnica DT1 de [Deudas técnicas](../990-Deudas-tecnicas.md).
 
 | Tabla | Tipo | Llave primaria | Objeto | Se modifica |
 | --- | --- | --- | --- | --- |

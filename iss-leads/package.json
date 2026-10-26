@@ -1,0 +1,26 @@
+{
+	"name": "iss-leads",
+	"version": "1.0.0",
+	"description": "Servicio Azure Functions del proyecto Leads: leads, sus correos y los mensajes enviados",
+	"scripts": {
+		"deploy": "npm update && npm run build && npm version patch --no-git-tag-version && npm run git",
+		"build": "tsc",
+		"watch": "tsc -w",
+		"prestart": "npm run build",
+		"start": "func start",
+		"git": "git add -A && git commit && git push -u origin main",
+		"test": "npx oxlint@latest src"
+	},
+	"dependencies": {
+		"@azure/functions": "^4.x",
+		"@ingenieria_insoft/ispazureutils": "^2.x",
+		"@ingenieria_insoft/ispbdsql": "^2.x",
+		"@ingenieria_insoft/ispgen": "^2.x",
+		"@ingenieria_insoft/ispnodejs": "^2.x",
+		"@ingenieria_insoft/ispserver": "^2.x"
+	},
+	"devDependencies": {
+		"typescript": "^7.x"
+	},
+	"main": "dist/src/functions/*.js"
+}

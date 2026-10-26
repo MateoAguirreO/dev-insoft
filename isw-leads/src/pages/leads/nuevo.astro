@@ -1,0 +1,8 @@
+---
+import Layout from "$layouts/Layout.astro";
+import Lead from "$views/leads/Lead.svelte";
+---
+
+<Layout title="Nuevo lead">
+	<Lead client:only="svelte" bNuevo={true} />
+</Layout>

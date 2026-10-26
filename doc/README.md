@@ -18,6 +18,7 @@ El proyecto tiene un solo módulo, Leads, así que la estructura va directa en e
 | Arquitectura | [Componentes](020-Arquitectura/020-Componentes.md) |
 | Modelado de datos | [Modelo de datos](030-Modelado-de-datos/010-Modelo-de-datos.md) |
 | Procesos | [Seguridad](040-Procesos/010-Seguridad.md) |
+| Deudas técnicas | [Deudas técnicas](990-Deudas-tecnicas.md) |
 
 ## Vocabulario de tags
 
@@ -35,4 +36,4 @@ Toda nota lleva de dos a cuatro tags en orden módulo, sección, tema. Solo vale
 | --- | --- | --- | --- |
 | La carpeta raíz se llama `docs/` | Se llama `doc/` | Es la bóveda de Obsidian que ya existía en el proyecto | *Pendiente · Líder técnico* |
 | Diagramas en Visual Paradigm exportados a SVG, con el modelo original en adjuntos | Los SVG se escribieron a mano y son su propia fuente | No hay modelo de Visual Paradigm; el SVG es texto y se edita directamente | *Pendiente · Líder técnico* |
-| La documentación vive en el repositorio `ISD-{Proyecto}` | Vive en una carpeta local sin Git | El proyecto aún no tiene repositorio | *Pendiente · Líder técnico* |
+| La documentación vive en el repositorio `ISD-{Proyecto}` | Vive en un repositorio Git local que no sigue el nombre `ISD-{Proyecto}` y en el que `iss-leads` e `isw-leads` son carpetas, no submódulos | Proyecto de introducción, sin repositorio remoto todavía | *Pendiente · Líder técnico* |

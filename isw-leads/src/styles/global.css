@@ -1,0 +1,47 @@
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap");
+@import "tailwindcss";
+
+/*
+  Tipografía y paleta de ContaPyme®, tomadas del cliente de referencia ISW-ContaPymeWeb (src/styles/global.css).
+  Open Sans se declara como la `sans` del tema para que la hereden también los controles de ispsveltecomponents.
+*/
+@theme {
+	--font-sans: "Open Sans", system-ui, -apple-system, sans-serif;
+
+	--color-azul-primario: #1bbcfb;
+	--color-azul-oscuro: #0a2540;
+	--color-azul-claro: #2d9ee7;
+	--color-azul-palido: #e6f4ff;
+	--color-gris: #f5f7fa;
+	--color-texto: #0a2540;
+	--color-texto-medio: #5a6b7c;
+	--color-linea: #e2e8f0;
+	--color-exito: #16a34a;
+	--color-alerta: #dc2626;
+}
+
+:root {
+	/* Variables del sistema que leen los componentes de ispsveltecomponents */
+	--is-primary: var(--color-azul-primario);
+	--is-color: var(--color-texto);
+	--is-bg-primary: #ffffff;
+	--is-bg-secondary: var(--color-gris);
+	--is-bg-readonly: var(--color-gris);
+	--is-b-color: var(--color-linea);
+	--is-b-required: var(--color-linea);
+	--is-b-optional: var(--color-linea);
+	--is-b-readonly: var(--color-linea);
+	--is-info: var(--color-azul-claro);
+	--is-success: var(--color-exito);
+	--is-warning: #ffc107;
+	--is-error: var(--color-alerta);
+	--is-danger: var(--color-alerta);
+}
+
+@layer base {
+	body {
+		font-family: var(--font-sans);
+		color: var(--is-color);
+		-webkit-font-smoothing: antialiased;
+	}
+}
