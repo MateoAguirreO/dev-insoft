@@ -1,0 +1,1291 @@
+{
+	"info": {
+		"_postman_id": "d02202b1-34df-40a1-a743-a32b3658b76c",
+		"name": "010-ISS-Leads",
+		"description": "# ISS-Leads\n\nAPI REST del servicio **ISS-Leads** (Azure Functions y PostgreSQL 18). Administra leads, sus correos y los mensajes enviados a cada lead. Las rutas y los nombres de función son los mismos del servicio (skill `iss-azure-function`).\n\n## Ambientes\n\n| Ambiente | `baseUrl` |\n| --- | --- |\n| Local | `http://localhost:7071/api`; el servicio se levanta con `npm start` en `iss-leads` |\n\nImporta también el ambiente **020-ISS-Leads-Local** y selecciónalo antes de enviar.\n\n## Autenticación\n\nTodo endpoint exige `Authorization: Bearer <JWT>`, salvo **010-Estado del servicio**. La colección lo envía con la variable `{{token}}` del ambiente.\n\n- El JWT es HS256 y su `jti` identifica una fila de `seg_sesiones`. El servicio verifica la firma, el vencimiento, que la sesión siga abierta y que el usuario esté activo; si algo falla responde **401**.\n- **Temporal, hasta que exista el inicio de sesión (paso 3):** el token se genera con el comando local del desarrollador y se pega en el *Current value* de `token`. El token nunca se guarda en la colección ni en el repositorio.\n\n## Variables\n\n| Variable | Ámbito | Contenido |\n| --- | --- | --- |\n| `baseUrl` | Ambiente | URL base del API |\n| `token` | Ambiente (secreta) | JWT del usuario |\n| `ilead` | Colección | La guarda **040-Leads / 010-Crear lead** |\n| `filtroLeads` | Colección | La arma **040-Leads / 040-Listar leads paginado** |\n| `ileadDuplicado`, `ileadRecodificado` | Colección | Las generan **070-Duplicar lead** y **080-Recodificar lead** |\n| `imensaje` | Colección | La guarda **050-Mensajes del lead / 010-Registrar mensaje** |\n\n## Formato de respuesta\n\nToda respuesta trae `encabezado` (`resultado`, `tiempo`, `fhentrada`, `fhsalida` y, cuando falla, `imensaje` con el código y `mensaje` con el motivo) y `respuesta`. En las consultas `respuesta` trae `datos`; en los listados trae `pagina`, `qregistros`, `totalregistros`, `totalpaginas` y `datos`.\n\n## Códigos de respuesta\n\n| Código | Cuándo |\n| --- | --- |\n| 200, 201, 202 | Consulta, creación o modificación exitosa |\n| 400 | Datos inválidos o regla de negocio incumplida; `mensaje` dice cuál |\n| 401 | Sin token, token inválido o vencido, sesión cerrada o usuario inactivo |\n| 404 | El recurso no existe |\n| 500 | Error del servicio o de la base de datos |\n\n## Cómo correrla\n\nEl *Collection Runner* la recorre en orden: crea un lead, lo consulta, lo lista, lo modifica, lo verifica, lo duplica, recodifica y elimina la copia, y le registra un mensaje. Cada corrida deja ese lead y su mensaje en la BD, porque un lead con mensajes no se elimina. Solo se usan datos sintéticos.\n\nCada request trae sus ejemplos de respuesta (éxito y errores), tomados de respuestas reales del servicio local.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:7071/api",
+			"type": "string"
+		},
+		{
+			"key": "ilead",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "filtroLeads",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "ileadDuplicado",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "ileadRecodificado",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "imensaje",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "010-Servicio",
+			"description": "Estado del servicio y de su conexión a la base de datos.",
+			"item": [
+				{
+					"name": "010-Estado del servicio",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "OPTIONS",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								""
+							]
+						},
+						"description": "Health-check del servicio: devuelve el nombre y la versión de `iss-leads`, la versión de Node, el slot y si la conexión a la BD indicada en `namedb` responde. Úsalo para confirmar que el servicio está arriba antes de probar lo demás.\n\n**Función:** `API_Options_Info_Server` · **Ruta:** `OPTIONS /api/{rest?}` · **Autenticación:** ninguna (es el único endpoint público junto con el inicio de sesión).\n\n**Respuestas:** 200 con `respuesta.datos.database.bconnected` en `true` si la BD responde. También trae la ubicación de la IP desde la que se llama; en el ejemplo va con marcadores.\n\n**Script de prueba:** valida el 200."
+					},
+					"response": [
+						{
+							"name": "200 Servicio arriba",
+							"originalRequest": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "OPTIONS",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										""
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 1,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.309Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.310Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"name\": \"iss-leads\",\n\t\t\t\"version\": \"1.0.0\",\n\t\t\t\"timezone\": \"\",\n\t\t\t\"nodeversion\": \"v24.22.1\",\n\t\t\t\"slot\": \"PRODUCTION\",\n\t\t\t\"devby\": \"REEMPLACE-POR-DESARROLLADOR\",\n\t\t\t\"database\": {\n\t\t\t\t\"database\": \"leads\",\n\t\t\t\t\"bconnected\": true,\n\t\t\t\t\"timeconnect\": 1\n\t\t\t},\n\t\t\t\"getlocation\": {\n\t\t\t\t\"sip\": \"203.0.113.10\",\n\t\t\t\t\"snombre\": \"\",\n\t\t\t\t\"grupo\": \"GEN\",\n\t\t\t\t\"ipais\": \"CO\",\n\t\t\t\t\"pais\": \"Colombia\",\n\t\t\t\t\"iregion\": \"REEMPLACE-POR-REGION\",\n\t\t\t\t\"region\": \"REEMPLACE-POR-REGION\",\n\t\t\t\t\"iciudad\": \"REEMPLACE-POR-CIUDAD\",\n\t\t\t\t\"ciudad\": \"REEMPLACE-POR-CIUDAD\",\n\t\t\t\t\"latitud\": 0,\n\t\t\t\t\"longitud\": 0,\n\t\t\t\t\"zipcode\": \"REEMPLACE-POR-CODIGO-POSTAL\",\n\t\t\t\t\"isp\": \"REEMPLACE-POR-PROVEEDOR\",\n\t\t\t\t\"fcreacion\": \"2024-05-22T01:55:21.970Z\",\n\t\t\t\t\"fultrequest\": \"2026-10-26T21:01:10.147Z\"\n\t\t\t}\n\t\t}\n\t}\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "040-Leads",
+			"description": "Catálogo de leads con sus correos como detalle. Las tablas son `leads` (datos, con auditoría de creación y modificación) y `leads_correos` (detalle, sin auditoría). La auditoría la pone el servidor con los datos del token; lo que mande el cliente en esas columnas se ignora.",
+			"item": [
+				{
+					"name": "010-Crear lead",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+									"pm.test(\"encabezado.resultado es true\", function () { pm.expect(pm.response.json().encabezado.resultado).to.eql(true); });",
+									"pm.collectionVariables.set(\"ilead\", pm.response.json().respuesta.datos.ilead);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"nombre\": \"Ana Prueba\",\n\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\"cargo\": \"Jefe de compras\",\n\t\"telefono\": \"3000000000\",\n\t\"ciudad\": \"Medellín\",\n\t\"origen\": \"sitio web\",\n\t\"observaciones\": \"Lead de ejemplo para Postman: datos sintéticos\",\n\t\"correos\": [\n\t\t{\n\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\"bprincipal\": true\n\t\t},\n\t\t{\n\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\"bprincipal\": false\n\t\t}\n\t]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/leads",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"leads"
+							]
+						},
+						"description": "Registra un lead con sus correos. Se usa al capturar un prospecto nuevo.\n\n**Función:** `API_POST_Lead` · **Ruta:** `POST /api/leads`\n\n**Body:** `nombre` (obligatorio, máx. 100), `empresa` (100), `cargo`, `telefono`, `ciudad` y `origen` (50 cada uno), `iestado` (1 Nuevo, 2 Contactado, 3 Calificado, 4 Descartado, 5 Convertido), `observaciones`, `bactivo` y `correos` (`email` máx. 100 y `bprincipal`).\n\n**Reglas:** el `ilead` lo asigna la secuencia `seq_leads` si no llega; `iestado` toma 1 (Nuevo) y `bactivo` toma `true` si no llegan; los correos no se repiten, todos llevan `email` y máximo uno es principal; el `email` se guarda en minúscula. La auditoría de creación y modificación sale del token.\n\n**Respuestas:** 201 con el lead creado y su auditoría · 400 si falta el nombre, el estado no existe o los correos no cumplen · 401 sin token válido.\n\n**Script de prueba:** valida el 201 y guarda el `ilead` creado en la variable de colección `ilead`."
+					},
+					"response": [
+						{
+							"name": "201 Lead creado",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"nombre\": \"Ana Prueba\",\n\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\"cargo\": \"Jefe de compras\",\n\t\"telefono\": \"3000000000\",\n\t\"ciudad\": \"Medellín\",\n\t\"origen\": \"sitio web\",\n\t\"observaciones\": \"Lead de ejemplo para Postman: datos sintéticos\",\n\t\"correos\": [\n\t\t{\n\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\"bprincipal\": true\n\t\t},\n\t\t{\n\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\"bprincipal\": false\n\t\t}\n\t]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/leads",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 12,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.342Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.354Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"ilead\": 6,\n\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\"cargo\": \"Jefe de compras\",\n\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\"origen\": \"sitio web\",\n\t\t\t\"iestado\": 1,\n\t\t\t\"observaciones\": \"Lead de ejemplo para Postman: datos sintéticos\",\n\t\t\t\"bactivo\": true,\n\t\t\t\"correos\": [\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t}\n\t\t\t],\n\t\t\t\"mensajes\": [],\n\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\"iequipoult\": 0,\n\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\"fhult\": \"2026-10-26T21:02:51.345Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 0,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:02:51.345Z\"\n\t\t}\n\t}\n}"
+						},
+						{
+							"name": "400 Falta el nombre",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"nombre\": \"\",\n\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\"cargo\": \"Jefe de compras\",\n\t\"telefono\": \"3000000000\",\n\t\"ciudad\": \"Medellín\",\n\t\"origen\": \"sitio web\",\n\t\"observaciones\": \"Lead de ejemplo para Postman: datos sintéticos\",\n\t\"correos\": [\n\t\t{\n\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\"bprincipal\": true\n\t\t},\n\t\t{\n\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\"bprincipal\": false\n\t\t}\n\t]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/leads",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 16,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.322Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.338Z\",\n\t\t\"imensaje\": 400040,\n\t\t\"mensaje\": \"No se ha recibido el parámetro 'nombre' en el cuerpo de la petición, por lo cual no ha sido posible procesar su solicitud\"\n\t}\n}"
+						},
+						{
+							"name": "401 Sin token",
+							"originalRequest": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"nombre\": \"Ana Prueba\",\n\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\"cargo\": \"Jefe de compras\",\n\t\"telefono\": \"3000000000\",\n\t\"ciudad\": \"Medellín\",\n\t\"origen\": \"sitio web\",\n\t\"observaciones\": \"Lead de ejemplo para Postman: datos sintéticos\",\n\t\"correos\": [\n\t\t{\n\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\"bprincipal\": true\n\t\t},\n\t\t{\n\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\"bprincipal\": false\n\t\t}\n\t]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/leads",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads"
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 1,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.318Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.319Z\",\n\t\t\"imensaje\": 401020,\n\t\t\"mensaje\": \"No se ha definido el parámetro de autenticación, por favor verifique que esté enviando el header, query o parámetro \\\"authorization\\\"\"\n\t}\n}"
+						}
+					]
+				},
+				{
+					"name": "020-Obtener lead",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+									"pm.test(\"encabezado.resultado es true\", function () { pm.expect(pm.response.json().encabezado.resultado).to.eql(true); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/leads/{{ilead}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"leads",
+								"{{ilead}}"
+							]
+						},
+						"description": "Consulta un lead con sus correos (`correos`) y sus mensajes (`mensajes`). Se usa para abrir la ficha del lead.\n\n**Función:** `API_GET_Lead` · **Ruta:** `GET /api/leads/{ilead}`\n\n**Parámetros:** `ilead` (entero) en la ruta.\n\n**Respuestas:** 200 con el lead · 404 si no existe · 401 sin token válido.\n\n**Script de prueba:** valida el 200."
+					},
+					"response": [
+						{
+							"name": "200 Lead encontrado",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/leads/6",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads",
+										"6"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 3,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.357Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.360Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"ilead\": 6,\n\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\"cargo\": \"Jefe de compras\",\n\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\"origen\": \"sitio web\",\n\t\t\t\"iestado\": 1,\n\t\t\t\"observaciones\": \"Lead de ejemplo para Postman: datos sintéticos\",\n\t\t\t\"bactivo\": true,\n\t\t\t\"correos\": [\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t}\n\t\t\t],\n\t\t\t\"mensajes\": [],\n\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\"iequipoult\": 0,\n\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\"fhult\": \"2026-10-26T21:02:51.345Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 0,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:02:51.345Z\"\n\t\t}\n\t}\n}"
+						},
+						{
+							"name": "404 Lead inexistente",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/leads/999999999",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads",
+										"999999999"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.362Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.364Z\",\n\t\t\"imensaje\": 404010,\n\t\t\"mensaje\": \"No se ha encontrado el recurso solicitado. No se ha encontrado el información de Lead con identificador [\\\"ilead\\\":\\\"999999999\\\"]\"\n\t}\n}"
+						}
+					]
+				},
+				{
+					"name": "030-Listar leads",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+									"pm.test(\"encabezado.resultado es true\", function () { pm.expect(pm.response.json().encabezado.resultado).to.eql(true); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/leads",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"leads"
+							]
+						},
+						"description": "Lista los leads con sus correos, paginados de a 1000 y ordenados por `ilead`. Se usa para la vista de catálogo.\n\n**Función:** `API_GET_LIST_Lead` · **Ruta:** `GET /api/leads/{datosfiltro?}`, sin `datosfiltro`.\n\n**Respuestas:** 200 con `pagina`, `qregistros`, `totalregistros`, `totalpaginas` y `datos` · 401 sin token válido.\n\n**Script de prueba:** valida el 200."
+					},
+					"response": [
+						{
+							"name": "200 Listado",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/leads",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 3,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.366Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.369Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"pagina\": 1,\n\t\t\"qregistros\": 1000,\n\t\t\"totalregistros\": 2,\n\t\t\"totalpaginas\": 1,\n\t\t\"datos\": [\n\t\t\t{\n\t\t\t\t\"ilead\": 2,\n\t\t\t\t\"nombre\": \"Prueba tildes ñandú\",\n\t\t\t\t\"empresa\": \"Compañía Ejemplo\",\n\t\t\t\t\"cargo\": \"Jefe de compras\",\n\t\t\t\t\"telefono\": \"\",\n\t\t\t\t\"ciudad\": \"Bogotá\",\n\t\t\t\t\"origen\": \"referido\",\n\t\t\t\t\"iestado\": 1,\n\t\t\t\t\"observaciones\": \"\",\n\t\t\t\t\"bactivo\": true,\n\t\t\t\t\"correos\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 2,\n\t\t\t\t\t\t\"email\": \"tildes@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"ilead\": 6,\n\t\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\t\"cargo\": \"Jefe de compras\",\n\t\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\t\"origen\": \"sitio web\",\n\t\t\t\t\"iestado\": 1,\n\t\t\t\t\"observaciones\": \"Lead de ejemplo para Postman: datos sintéticos\",\n\t\t\t\t\"bactivo\": true,\n\t\t\t\t\"correos\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t\t}\n\t\t\t\t],\n\t\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\t\"iequipoult\": 0,\n\t\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\t\"fhult\": \"2026-10-26T21:02:51.345Z\",\n\t\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\t\"iequipocre\": 0,\n\t\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\t\"fhcre\": \"2026-10-26T21:02:51.345Z\"\n\t\t\t}\n\t\t]\n\t}\n}"
+						}
+					]
+				},
+				{
+					"name": "040-Listar leads paginado",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const filtro = { pagina: 1, qregistros: 10, orden: { ilead: \"DESC\" } };",
+									"const base64 = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(JSON.stringify(filtro)));",
+									"pm.collectionVariables.set(\"filtroLeads\", base64.replace(/\\+/g, \"-\").replace(/\\//g, \"_\").replace(/=+$/, \"\"));"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+									"pm.test(\"encabezado.resultado es true\", function () { pm.expect(pm.response.json().encabezado.resultado).to.eql(true); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/leads/{{filtroLeads}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"leads",
+								"{{filtroLeads}}"
+							]
+						},
+						"description": "Lista los leads con paginación y orden propios. Se usa cuando el consumidor maneja páginas.\n\n**Función:** `API_GET_LIST_Lead` · **Ruta:** `GET /api/leads/{datosfiltro}`\n\n**Parámetros:** `datosfiltro` es un JSON en Base64URL con `pagina`, `qregistros` y `orden` (columna → `ASC` o `DESC`). Este request usa `{ \"pagina\": 1, \"qregistros\": 10, \"orden\": { \"ilead\": \"DESC\" } }`. El servicio todavía no filtra por columnas; el filtrado se hace en el cliente.\n\n**Respuestas:** 200 con la página pedida · 401 sin token válido.\n\n**Script previo:** arma el JSON del filtro, lo codifica en Base64URL y lo guarda en `filtroLeads`. **Script de prueba:** valida el 200."
+					},
+					"response": [
+						{
+							"name": "200 Página 1 de a 10, del más reciente",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/leads/eyJwYWdpbmEiOjEsInFyZWdpc3Ryb3MiOjEwLCJvcmRlbiI6eyJpbGVhZCI6IkRFU0MifX0",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads",
+										"eyJwYWdpbmEiOjEsInFyZWdpc3Ryb3MiOjEwLCJvcmRlbiI6eyJpbGVhZCI6IkRFU0MifX0"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.371Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.373Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"pagina\": 1,\n\t\t\"qregistros\": 10,\n\t\t\"totalregistros\": 2,\n\t\t\"totalpaginas\": 1,\n\t\t\"datos\": [\n\t\t\t{\n\t\t\t\t\"ilead\": 6,\n\t\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\t\"cargo\": \"Jefe de compras\",\n\t\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\t\"origen\": \"sitio web\",\n\t\t\t\t\"iestado\": 1,\n\t\t\t\t\"observaciones\": \"Lead de ejemplo para Postman: datos sintéticos\",\n\t\t\t\t\"bactivo\": true,\n\t\t\t\t\"correos\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t\t}\n\t\t\t\t],\n\t\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\t\"iequipoult\": 0,\n\t\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\t\"fhult\": \"2026-10-26T21:02:51.345Z\",\n\t\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\t\"iequipocre\": 0,\n\t\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\t\"fhcre\": \"2026-10-26T21:02:51.345Z\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"ilead\": 2,\n\t\t\t\t\"nombre\": \"Prueba tildes ñandú\",\n\t\t\t\t\"empresa\": \"Compañía Ejemplo\",\n\t\t\t\t\"cargo\": \"Jefe de compras\",\n\t\t\t\t\"telefono\": \"\",\n\t\t\t\t\"ciudad\": \"Bogotá\",\n\t\t\t\t\"origen\": \"referido\",\n\t\t\t\t\"iestado\": 1,\n\t\t\t\t\"observaciones\": \"\",\n\t\t\t\t\"bactivo\": true,\n\t\t\t\t\"correos\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"ilead\": 2,\n\t\t\t\t\t\t\"email\": \"tildes@ejemplo.com\",\n\t\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t]\n\t}\n}"
+						}
+					]
+				},
+				{
+					"name": "050-Modificar lead",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 202\", function () { pm.response.to.have.status(202); });",
+									"pm.test(\"encabezado.resultado es true\", function () { pm.expect(pm.response.json().encabezado.resultado).to.eql(true); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"nombre\": \"Ana Prueba\",\n\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\"cargo\": \"Gerente de compras\",\n\t\"telefono\": \"3000000000\",\n\t\"ciudad\": \"Medellín\",\n\t\"origen\": \"sitio web\",\n\t\"observaciones\": \"Ya se le envió la propuesta comercial\",\n\t\"correos\": [\n\t\t{\n\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\"bprincipal\": true\n\t\t},\n\t\t{\n\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\"bprincipal\": false\n\t\t}\n\t],\n\t\"iestado\": 2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/leads/{{ilead}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"leads",
+								"{{ilead}}"
+							]
+						},
+						"description": "Modifica un lead y reemplaza sus correos. Se usa al editar la ficha.\n\n**Función:** `API_PUT_Lead` · **Ruta:** `PUT /api/leads/{ilead}`\n\n**Body:** las mismas columnas de **010-Crear lead**; solo se actualizan las que cambian.\n\n**Reglas:** los correos se **reemplazan** por los que lleguen, así que hay que enviarlos todos (si no llegan, el lead queda sin correos). La auditoría de creación no cambia y la de modificación sale del token, aunque el cliente las mande.\n\n**Respuestas:** 202 con el lead modificado · 400 si los datos no cumplen o el lead no existe · 401 sin token válido.\n\n**Script de prueba:** valida el 202."
+					},
+					"response": [
+						{
+							"name": "202 Lead modificado",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"nombre\": \"Ana Prueba\",\n\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\"cargo\": \"Gerente de compras\",\n\t\"telefono\": \"3000000000\",\n\t\"ciudad\": \"Medellín\",\n\t\"origen\": \"sitio web\",\n\t\"observaciones\": \"Ya se le envió la propuesta comercial\",\n\t\"correos\": [\n\t\t{\n\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\"bprincipal\": true\n\t\t},\n\t\t{\n\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\"bprincipal\": false\n\t\t}\n\t],\n\t\"iestado\": 2\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/leads/6",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads",
+										"6"
+									]
+								}
+							},
+							"status": "Accepted",
+							"code": 202,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 7,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.375Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.382Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"ilead\": 6,\n\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\"cargo\": \"Gerente de compras\",\n\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\"origen\": \"sitio web\",\n\t\t\t\"iestado\": 2,\n\t\t\t\"observaciones\": \"Ya se le envió la propuesta comercial\",\n\t\t\t\"bactivo\": true,\n\t\t\t\"correos\": [\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 6,\n\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t}\n\t\t\t],\n\t\t\t\"mensajes\": [],\n\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\"iequipoult\": 0,\n\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\"fhult\": \"2026-10-26T21:02:51.377Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 0,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:02:51.345Z\"\n\t\t}\n\t}\n}"
+						}
+					]
+				},
+				{
+					"name": "060-Verificar lead",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+									"pm.test(\"encabezado.resultado es true\", function () { pm.expect(pm.response.json().encabezado.resultado).to.eql(true); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/leads/{{ilead}}/verificar",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"leads",
+								"{{ilead}}",
+								"verificar"
+							]
+						},
+						"description": "Ejecuta las verificaciones generales del recurso (tabla, esquema y datos) y devuelve los mensajes encontrados. Se usa antes de operaciones masivas.\n\n**Función:** `LEAD_VERIFY_HTTP` · **Ruta:** `GET /api/leads/{ilead}/verificar`. Se registra aparte del helper de catálogo para que exija el token.\n\n**Respuestas:** 200 con `respuesta.verificacion` · 401 sin token válido.\n\n**Script de prueba:** valida el 200."
+					},
+					"response": [
+						{
+							"name": "200 Verificación",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/leads/6/verificar",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads",
+										"6",
+										"verificar"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 1,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.385Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.386Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"verificacion\": {\n\t\t\t\"mensajes\": [],\n\t\t\t\"qerrores\": 0,\n\t\t\t\"qwarning\": 0,\n\t\t\t\"qinfos\": 0\n\t\t}\n\t}\n}"
+						}
+					]
+				},
+				{
+					"name": "070-Duplicar lead",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.collectionVariables.set(\"ileadDuplicado\", 900000000 + Math.floor(Math.random() * 99999999));"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+									"pm.test(\"encabezado.resultado es true\", function () { pm.expect(pm.response.json().encabezado.resultado).to.eql(true); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"ilead\": \"{{ileadDuplicado}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/leads/{{ilead}}/duplicar",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"leads",
+								"{{ilead}}",
+								"duplicar"
+							]
+						},
+						"description": "Crea una copia del lead con sus correos, con el `ilead` que llega en el body. Se usa para registrar un lead parecido sin capturarlo de nuevo.\n\n**Función:** `API_DUPLICAR_Lead` · **Ruta:** `POST /api/leads/{ilead}/duplicar`\n\n**Body:** `ilead` de la copia (obligatorio y distinto del original).\n\n**Reglas (decisión D2):** se copian el lead y sus correos, no los mensajes. La auditoría de la copia sale del token. Ojo: el `ilead` lo elige el cliente; si coincide con un valor futuro de `seq_leads`, el siguiente lead que se cree fallará.\n\n**Respuestas:** 201 con la copia · 400 si el `ilead` es el mismo del original · 401 sin token válido.\n\n**Script previo:** genera un `ilead` alto y aleatorio en `ileadDuplicado`, para no chocar con la secuencia. **Script de prueba:** valida el 201."
+					},
+					"response": [
+						{
+							"name": "201 Lead duplicado",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"ilead\": 935547813\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/leads/6/duplicar",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads",
+										"6",
+										"duplicar"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 6,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.388Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.394Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"ilead\": 935547813,\n\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\"cargo\": \"Gerente de compras\",\n\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\"origen\": \"sitio web\",\n\t\t\t\"iestado\": 2,\n\t\t\t\"observaciones\": \"Ya se le envió la propuesta comercial\",\n\t\t\t\"bactivo\": true,\n\t\t\t\"correos\": [\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 935547813,\n\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 935547813,\n\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t}\n\t\t\t],\n\t\t\t\"mensajes\": [],\n\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\"iequipoult\": 0,\n\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\"fhult\": \"2026-10-26T21:02:51.392Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 0,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:02:51.392Z\"\n\t\t}\n\t}\n}"
+						},
+						{
+							"name": "400 Mismo identificador",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"ilead\": 6\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/leads/6/duplicar",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads",
+										"6",
+										"duplicar"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 1,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.397Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.398Z\",\n\t\t\"imensaje\": 400999,\n\t\t\"mensaje\": \"No se puede duplicar un registro del catálogo de con el mismo identificador\"\n\t}\n}"
+						}
+					]
+				},
+				{
+					"name": "080-Recodificar lead",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.collectionVariables.set(\"ileadRecodificado\", 900000000 + Math.floor(Math.random() * 99999999));"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 202\", function () { pm.response.to.have.status(202); });",
+									"pm.test(\"encabezado.resultado es true\", function () { pm.expect(pm.response.json().encabezado.resultado).to.eql(true); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"ilead\": \"{{ileadRecodificado}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/leads/{{ileadDuplicado}}/recodificar",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"leads",
+								"{{ileadDuplicado}}",
+								"recodificar"
+							]
+						},
+						"description": "Cambia el `ilead` de un lead y lo arrastra a sus correos y mensajes. Se usa para corregir el código de un lead.\n\n**Función:** `API_RECODIFICAR_Lead` · **Ruta:** `PUT /api/leads/{ilead}/recodificar` (también acepta `PATCH`). Aquí recodifica la copia que dejó **070-Duplicar lead**.\n\n**Body:** `ilead` nuevo (distinto del actual).\n\n**Reglas (decisión D2):** el cambio se aplica en `leads`, `leads_correos` y `leads_mensajes` en la misma transacción, y la auditoría de modificación del lead sale del token.\n\n**Respuestas:** 202 con el lead recodificado · 400 si el `ilead` es el mismo · 401 sin token válido.\n\n**Script previo:** genera un `ilead` alto y aleatorio en `ileadRecodificado`. **Script de prueba:** valida el 202."
+					},
+					"response": [
+						{
+							"name": "202 Lead recodificado",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"ilead\": 992130342\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/leads/935547813/recodificar",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads",
+										"935547813",
+										"recodificar"
+									]
+								}
+							},
+							"status": "Accepted",
+							"code": 202,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 4,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.401Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.405Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"ilead\": 992130342,\n\t\t\t\"nombre\": \"Ana Prueba\",\n\t\t\t\"empresa\": \"Empresa Ejemplo S.A.S.\",\n\t\t\t\"cargo\": \"Gerente de compras\",\n\t\t\t\"telefono\": \"3000000000\",\n\t\t\t\"ciudad\": \"Medellín\",\n\t\t\t\"origen\": \"sitio web\",\n\t\t\t\"iestado\": 2,\n\t\t\t\"observaciones\": \"Ya se le envió la propuesta comercial\",\n\t\t\t\"bactivo\": true,\n\t\t\t\"correos\": [\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 992130342,\n\t\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": true\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"ilead\": 992130342,\n\t\t\t\t\t\"email\": \"compras@ejemplo.com\",\n\t\t\t\t\t\"bprincipal\": false\n\t\t\t\t}\n\t\t\t],\n\t\t\t\"mensajes\": [],\n\t\t\t\"iusuarioult\": \"prueba.postman\",\n\t\t\t\"iappult\": \"IAppOther\",\n\t\t\t\"iequipoult\": 0,\n\t\t\t\"ipult\": \"127.0.0.1\",\n\t\t\t\"fhult\": \"2026-10-26T21:02:51.404Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 0,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:02:51.392Z\"\n\t\t}\n\t}\n}"
+						}
+					]
+				},
+				{
+					"name": "090-Eliminar lead",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+									"pm.test(\"encabezado.resultado es true\", function () { pm.expect(pm.response.json().encabezado.resultado).to.eql(true); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/leads/{{ileadRecodificado}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"leads",
+								"{{ileadRecodificado}}"
+							]
+						},
+						"description": "Elimina un lead y sus correos. Aquí elimina la copia recodificada, que no tiene mensajes.\n\n**Función:** `API_DELETE_Lead` · **Ruta:** `DELETE /api/leads/{ilead}`\n\n**Reglas (decisión D2):** si el lead tiene mensajes registrados la eliminación se rechaza, porque los mensajes son su historia.\n\n**Respuestas:** 200 con el lead eliminado · 400 si tiene mensajes · 404 si no existe · 401 sin token válido.\n\n**Script de prueba:** valida el 200."
+					},
+					"response": [
+						{
+							"name": "200 Lead eliminado",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/leads/992130342",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads",
+										"992130342"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 4,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.408Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.412Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"ilead\": 992130342,\n\t\t\t\"correos\": []\n\t\t}\n\t}\n}"
+						},
+						{
+							"name": "400 El lead tiene mensajes",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/leads/6",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads",
+										"6"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.577Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.579Z\",\n\t\t\"imensaje\": 400999,\n\t\t\"mensaje\": \"El lead 6 tiene mensajes registrados y no se puede eliminar\"\n\t}\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "050-Mensajes del lead",
+			"description": "Mensajes enviados a un lead (`leads_mensajes`, tabla de movimiento con auditoría de creación). Se registran, se listan por lead y se consultan; no se modifican ni se eliminan.",
+			"item": [
+				{
+					"name": "010-Registrar mensaje",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+									"pm.test(\"encabezado.resultado es true\", function () { pm.expect(pm.response.json().encabezado.resultado).to.eql(true); });",
+									"pm.collectionVariables.set(\"imensaje\", pm.response.json().respuesta.datos.imensaje);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\"asunto\": \"Propuesta comercial\",\n\t\"cuerpo\": \"Hola Ana, adjuntamos la propuesta que conversamos.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/leads/{{ilead}}/mensajes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"leads",
+								"{{ilead}}",
+								"mensajes"
+							]
+						},
+						"description": "Registra un mensaje que se le envió al lead por otro medio (el servicio no envía correos). Se usa cada vez que se contacta al lead.\n\n**Función:** `API_POST_LeadMensaje` · **Ruta:** `POST /api/leads/{ilead}/mensajes`\n\n**Body:** `email` (obligatorio), `asunto` (obligatorio, máx. 255), `cuerpo` y `fhenvio` (fecha y hora ISO; si no llega se usa la del servidor).\n\n**Reglas:** el lead de la ruta debe existir y el `email` debe ser uno de sus correos registrados; queda como copia histórica aunque el correo cambie después. El `imensaje` lo asigna la secuencia `seq_leads_mensajes`. La auditoría de creación sale del token.\n\n**Respuestas:** 201 con el mensaje · 400 si faltan datos, el lead no existe o el email no es del lead · 401 sin token válido.\n\n**Script de prueba:** valida el 201 y guarda el `imensaje` en la variable de colección `imensaje`."
+					},
+					"response": [
+						{
+							"name": "201 Mensaje registrado",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\"asunto\": \"Propuesta comercial\",\n\t\"cuerpo\": \"Hola Ana, adjuntamos la propuesta que conversamos.\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/leads/6/mensajes",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads",
+										"6",
+										"mensajes"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 15,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.550Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.565Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"imensaje\": 2,\n\t\t\t\"ilead\": 6,\n\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\"asunto\": \"Propuesta comercial\",\n\t\t\t\"cuerpo\": \"Hola Ana, adjuntamos la propuesta que conversamos.\",\n\t\t\t\"fhenvio\": \"2026-10-26T21:02:51.553Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 0,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:02:51.557Z\"\n\t\t}\n\t}\n}"
+						},
+						{
+							"name": "400 El email no es del lead",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"email\": \"otra.persona@ejemplo.com\",\n\t\"asunto\": \"Propuesta comercial\",\n\t\"cuerpo\": \"Hola Ana, adjuntamos la propuesta que conversamos.\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/leads/6/mensajes",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads",
+										"6",
+										"mensajes"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 132,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.415Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.547Z\",\n\t\t\"imensaje\": 400999,\n\t\t\"mensaje\": \"El email del mensaje no es un correo registrado del lead\"\n\t}\n}"
+						}
+					]
+				},
+				{
+					"name": "020-Listar mensajes",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+									"pm.test(\"encabezado.resultado es true\", function () { pm.expect(pm.response.json().encabezado.resultado).to.eql(true); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/leads/{{ilead}}/mensajes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"leads",
+								"{{ilead}}",
+								"mensajes"
+							]
+						},
+						"description": "Lista los mensajes del lead de la ruta. Se usa para ver la historia de contacto.\n\n**Función:** `API_GET_LIST_LeadMensaje` · **Ruta:** `GET /api/leads/{ilead}/mensajes/{datosfiltro?}`\n\n**Reglas:** el lead lo impone la ruta; el `filtro.sql` que mande el consumidor se descarta.\n\n**Respuestas:** 200 con los mensajes paginados · 400 si la ruta no trae un `ilead` válido · 401 sin token válido.\n\n**Script de prueba:** valida el 200."
+					},
+					"response": [
+						{
+							"name": "200 Mensajes del lead",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/leads/6/mensajes",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads",
+										"6",
+										"mensajes"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.567Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.569Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"pagina\": 1,\n\t\t\"qregistros\": 1000,\n\t\t\"totalregistros\": 1,\n\t\t\"totalpaginas\": 1,\n\t\t\"datos\": [\n\t\t\t{\n\t\t\t\t\"imensaje\": 2,\n\t\t\t\t\"ilead\": 6,\n\t\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\t\"asunto\": \"Propuesta comercial\",\n\t\t\t\t\"cuerpo\": \"Hola Ana, adjuntamos la propuesta que conversamos.\",\n\t\t\t\t\"fhenvio\": \"2026-10-26T21:02:51.553Z\",\n\t\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\t\"iequipocre\": 0,\n\t\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\t\"fhcre\": \"2026-10-26T21:02:51.557Z\"\n\t\t\t}\n\t\t]\n\t}\n}"
+						}
+					]
+				},
+				{
+					"name": "030-Obtener mensaje",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+									"pm.test(\"encabezado.resultado es true\", function () { pm.expect(pm.response.json().encabezado.resultado).to.eql(true); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/leads/{{ilead}}/mensajes/{{imensaje}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"leads",
+								"{{ilead}}",
+								"mensajes",
+								"{{imensaje}}"
+							]
+						},
+						"description": "Consulta un mensaje del lead. Se usa para ver el detalle de un contacto.\n\n**Función:** `API_GET_LeadMensaje` · **Ruta:** `GET /api/leads/{ilead}/mensajes/{imensaje}`\n\n**Reglas:** un mensaje de otro lead responde 404.\n\n**Respuestas:** 200 con el mensaje · 404 si no existe o es de otro lead · 401 sin token válido.\n\n**Script de prueba:** valida el 200."
+					},
+					"response": [
+						{
+							"name": "200 Mensaje encontrado",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/leads/6/mensajes/2",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads",
+										"6",
+										"mensajes",
+										"2"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": true,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.571Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.573Z\"\n\t},\n\t\"respuesta\": {\n\t\t\"datos\": {\n\t\t\t\"imensaje\": 2,\n\t\t\t\"ilead\": 6,\n\t\t\t\"email\": \"ana.prueba@ejemplo.com\",\n\t\t\t\"asunto\": \"Propuesta comercial\",\n\t\t\t\"cuerpo\": \"Hola Ana, adjuntamos la propuesta que conversamos.\",\n\t\t\t\"fhenvio\": \"2026-10-26T21:02:51.553Z\",\n\t\t\t\"iusuariocre\": \"prueba.postman\",\n\t\t\t\"iappcre\": \"IAppOther\",\n\t\t\t\"iequipocre\": 0,\n\t\t\t\"ipcre\": \"127.0.0.1\",\n\t\t\t\"fhcre\": \"2026-10-26T21:02:51.557Z\"\n\t\t}\n\t}\n}"
+						},
+						{
+							"name": "404 Mensaje inexistente",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/leads/6/mensajes/999999999",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leads",
+										"6",
+										"mensajes",
+										"999999999"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"encabezado\": {\n\t\t\"resultado\": false,\n\t\t\"tiempo\": 2,\n\t\t\"fhentrada\": \"2026-10-26T21:02:51.574Z\",\n\t\t\"fhsalida\": \"2026-10-26T21:02:51.576Z\",\n\t\t\"imensaje\": 404010,\n\t\t\"mensaje\": \"No se ha encontrado el recurso solicitado. No se ha encontrado el información de LeadMensaje con identificador [\\\"imensaje\\\":\\\"999999999\\\"]\"\n\t}\n}"
+						}
+					]
+				}
+			]
+		}
+	]
+}

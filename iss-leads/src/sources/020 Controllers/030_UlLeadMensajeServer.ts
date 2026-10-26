@@ -1,11 +1,11 @@
-import { TControllerServer } from "@ingenieria_insoft/ispazureutils";
 import { isBool, TErr400, TFiltroLista, TJSONObject, TListaPaginacion, val2Int } from "@ingenieria_insoft/ispgen";
 import { Rst400 } from "@ingenieria_insoft/ispserver";
 import { TLeadMensaje } from "../010 Objetos/030_UlLeadMensaje";
 import { secuencias, tablas } from "../010 UlConst";
+import { TSistemaLeads } from "./001_UlSistemaLeads";
 
 /** Mensajes enviados a un lead (`leads_mensajes`): se registran, se listan por lead y se consultan. */
-export class TLeadMensajeController extends TControllerServer<TLeadMensaje> {
+export class TLeadMensajeController extends TSistemaLeads<TLeadMensaje> {
 
 	public get nTbl(): tablas { return tablas.ntblLeadsMensajes }
 	public get klass(): typeof TLeadMensaje { return TLeadMensaje }
@@ -25,9 +25,11 @@ export class TLeadMensajeController extends TControllerServer<TLeadMensaje> {
 	 * se impone en `filtro.sql` con el `ilead` ya convertido a entero; el `filtro.sql` del consumidor se descarta.
 	 * @param JBody filtro, orden y paginación que envía el consumidor
 	 * @returns la página de mensajes del lead
+	 * @throws Rst401 si el token no es válido
 	 * @throws Rst400 si la ruta no trae un `ilead` válido
 	 */
 	public async list(JBody: TFiltroLista<TLeadMensaje>): Promise<TListaPaginacion<TLeadMensaje>> {
+		await this.verifyAuthorization();
 		const ileadRuta: number | undefined = this.ileadRuta;
 		if (!ileadRuta) throw Rst400(TErr400.param, "ilead");
 		if (!JBody.filtro) JBody.filtro = {};
@@ -50,11 +52,14 @@ export class TLeadMensajeController extends TControllerServer<TLeadMensaje> {
 
 	/**
 	 * Completa y valida el mensaje antes de registrarlo: lead de la ruta, fecha de envío, destinatario y llave.
+	 * El token se valida primero, para que una petición sin sesión no sepa si el lead existe.
 	 * @param Mensaje mensaje a registrar
 	 * @returns `true` si la verificación del padre autoriza el insert
+	 * @throws Rst401 si el token no es válido
 	 * @throws Rst400 si faltan datos, el `ilead` no coincide con la ruta, el lead no existe o el email no es un correo del lead
 	 */
 	protected async verifyInsert(Mensaje: TLeadMensaje): Promise<boolean> {
+		await this.verifyAuthorization();
 		const ileadRuta: number | undefined = this.ileadRuta;
 		if (Mensaje.ilead === undefined && ileadRuta !== undefined) Mensaje.ilead = ileadRuta;
 		if (ileadRuta !== undefined && Mensaje.ilead !== ileadRuta)

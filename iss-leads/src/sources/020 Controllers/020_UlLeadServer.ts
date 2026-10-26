@@ -1,16 +1,16 @@
-import { TControllerServer } from "@ingenieria_insoft/ispazureutils";
 import { TQueryOptions } from "@ingenieria_insoft/ispbdsql";
-import { isBool, TCampo, TErr400, TErr404, TFiltroLista, TListaPaginacion } from "@ingenieria_insoft/ispgen";
+import { isBool, TCampo, TErr400 } from "@ingenieria_insoft/ispgen";
 import { UUID } from "@ingenieria_insoft/ispnodejs";
-import { Rst400, Rst404 } from "@ingenieria_insoft/ispserver";
+import { Rst400 } from "@ingenieria_insoft/ispserver";
 import { TLead } from "../010 Objetos/020_UlLead";
 import { secuencias, tablas, TEstadoLead } from "../010 UlConst";
 import { iInfoLead } from "../010 UlTypes";
+import { TSistemaLeads } from "./001_UlSistemaLeads";
 import { TLeadCorreoController } from "./010_UlLeadCorreoServer";
 import { TLeadMensajeController } from "./030_UlLeadMensajeServer";
 
-/** Catálogo de leads (`leads`) con sus correos como detalle. Sin auditoría ni seguridad: extiende el base directo. */
-export class TLeadController extends TControllerServer<TLead> {
+/** Catálogo de leads (`leads`) con sus correos como detalle; el token y la auditoría los pone TSistemaLeads. */
+export class TLeadController extends TSistemaLeads<TLead> {
 
 	public get nTbl(): tablas { return tablas.ntblLeads }
 	public get klass(): typeof TLead { return TLead }
@@ -75,11 +75,14 @@ export class TLeadController extends TControllerServer<TLead> {
 
 	/**
 	 * Valida el lead, le asigna el `ilead` con la secuencia si no llega y completa estado y bandera de activo.
+	 * El token se valida primero, para que una petición sin sesión no consuma la secuencia.
 	 * @param Lead lead a crear, con sus correos
 	 * @returns `true` si la verificación del padre autoriza el insert
+	 * @throws Rst401 si el token no es válido
 	 * @throws Rst400 si los datos no son válidos o ya existe un lead con el `ilead` indicado
 	 */
 	protected async verifyInsert(Lead: TLead): Promise<boolean> {
+		await this.verifyAuthorization();
 		this.verifyDatosLead(Lead, true);
 		if (!isBool(Lead.ilead)) Lead.ilead = await this.Conn.nextVal(secuencias.seqLeads);
 		if (Lead.iestado === undefined) Lead.iestado = TEstadoLead.Nuevo;
@@ -91,9 +94,11 @@ export class TLeadController extends TControllerServer<TLead> {
 	 * Valida los datos que llegan para modificar el lead; los correos se reemplazan por los que lleguen.
 	 * @param Lead lead a modificar, con sus correos
 	 * @returns `true` si la verificación del padre autoriza el update
+	 * @throws Rst401 si el token no es válido
 	 * @throws Rst400 si los datos no son válidos
 	 */
 	protected async verifyUpdate(Lead: TLead): Promise<boolean> {
+		await this.verifyAuthorization();
 		this.verifyDatosLead(Lead, false);
 		return super.verifyUpdate(Lead);
 	}
@@ -128,6 +133,7 @@ export class TLeadController extends TControllerServer<TLead> {
 	 * Rechaza la eliminación de un lead que no existe o que ya tiene mensajes registrados.
 	 * @param Lead lead a eliminar, con su `ilead`
 	 * @returns `true` si la verificación del padre autoriza la eliminación
+	 * @throws Rst401 si el token no es válido
 	 * @throws Rst404 si el lead no existe
 	 * @throws Rst400 si el lead tiene mensajes: son su historia y no se borran (decisión D2)
 	 */

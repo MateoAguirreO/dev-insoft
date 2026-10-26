@@ -1,10 +1,10 @@
-import { TArray, TObject, val2Bool, val2Int, val2NumericEnum, val2Str, val2TArray } from "@ingenieria_insoft/ispgen";
+import { TArray, TObjectBase, val2Bool, val2Int, val2NumericEnum, val2Str, val2TArray } from "@ingenieria_insoft/ispgen";
 import { TEstadoLead } from "../010 UlConst";
 import { TLeadCorreo } from "./010_UlLeadCorreo";
 import { TLeadMensaje } from "./030_UlLeadMensaje";
 
-/** Lead o prospecto comercial (tabla `leads`). */
-export class TLead extends TObject {
+/** Lead o prospecto comercial (tabla `leads`); tabla de datos: auditoría de creación y modificación. */
+export class TLead extends TObjectBase {
 
 	//#region Columnas
 	public get ilead(): number { return this.f.ilead }

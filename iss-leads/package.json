@@ -17,9 +17,11 @@
 		"@ingenieria_insoft/ispnodejs": "^2.x",
 		"@ingenieria_insoft/ispserver": "^2.x",
 		"@ingenieria_insoft/ispbdsql": "^2.x",
-		"@ingenieria_insoft/ispazureutils": "^2.x"
+		"@ingenieria_insoft/ispazureutils": "^2.x",
+		"jsonwebtoken": "^9.x"
 	},
 	"devDependencies": {
+		"@types/jsonwebtoken": "^9.x",
 		"typescript": "^7.x"
 	},
 	"main": "dist/src/functions/*.js"

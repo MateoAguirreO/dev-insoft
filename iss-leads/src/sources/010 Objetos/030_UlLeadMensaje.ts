@@ -1,7 +1,7 @@
-import { lowerCase, TObject, val2Date, val2Int, val2Str } from "@ingenieria_insoft/ispgen";
+import { lowerCase, TObjectBaseMov, val2Date, val2Int, val2Str } from "@ingenieria_insoft/ispgen";
 
 /** Mensaje enviado a un lead (tabla `leads_mensajes`); es un movimiento: se registra una sola vez. */
-export class TLeadMensaje extends TObject {
+export class TLeadMensaje extends TObjectBaseMov {
 
 	public get imensaje(): number { return this.f.imensaje }
 	public set imensaje(value: any) { this.f.imensaje = val2Int(value) }
