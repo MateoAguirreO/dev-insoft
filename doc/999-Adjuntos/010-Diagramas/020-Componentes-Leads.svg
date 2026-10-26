@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 670" width="1160" height="670" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 820" width="1160" height="820" font-family="Segoe UI, Helvetica, Arial, sans-serif">
   <title>Leads · Diagrama de componentes</title>
   <defs>
     <marker id="flecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
@@ -9,18 +9,19 @@
     .cont { fill: #f6f8fb; stroke: #374151; stroke-width: 1.5; }
     .comp { fill: #ffffff; stroke: #374151; stroke-width: 1.3; }
     .inner { fill: #eef2f7; stroke: #9ca3af; stroke-width: 1; }
+    .base { fill: #e3ecf7; stroke: #6b7280; stroke-width: 1.2; }
     .opc { fill: #ffffff; stroke: #374151; stroke-width: 1.3; stroke-dasharray: 6 4; }
     .fuera { fill: #f9fafb; stroke: #9ca3af; stroke-width: 1.2; stroke-dasharray: 6 4; }
     .t1 { font-size: 15px; font-weight: 700; fill: #111827; }
     .t2 { font-size: 12.5px; font-weight: 700; fill: #111827; }
-    .mono { font-family: Consolas, 'Courier New', monospace; }
+    .mono { font-family: Consolas, 'Courier New', monospace; white-space: pre; }
     .d { font-size: 11px; fill: #4b5563; }
     .di { font-size: 11px; fill: #6b7280; font-style: italic; }
     .arr { stroke: #374151; stroke-width: 1.4; fill: none; marker-end: url(#flecha); }
     .lbl { font-size: 11px; fill: #374151; }
     .lblb { font-size: 11px; font-weight: 700; fill: #111827; }
   </style>
-  <rect x="0" y="0" width="1160" height="670" fill="#ffffff"/>
+  <rect x="0" y="0" width="1160" height="820" fill="#ffffff"/>
   <text x="40" y="36" font-size="18" font-weight="700" fill="#111827">Leads · Diagrama de componentes</text>
   <text x="1120" y="36" font-size="11" fill="#6b7280" text-anchor="end">Ambiente: local · configuración C (solo servicio)</text>
 
@@ -28,11 +29,13 @@
   <rect class="opc" x="40" y="110" width="220" height="86" rx="6"/>
   <text class="t2" x="56" y="134">ISW-Leads</text>
   <text class="d" x="56" y="153">Cliente web · Astro + Svelte</text>
-  <text class="di" x="56" y="183">En el alcance según decisión D6</text>
+  <text class="di" x="56" y="172">En el alcance según decisión D6</text>
+  <text class="di" x="56" y="187">Aún no inicia sesión</text>
 
   <rect class="comp" x="40" y="220" width="220" height="70" rx="6"/>
   <text class="t2" x="56" y="244">Postman</text>
   <text class="d" x="56" y="263">Colección de pruebas del API</text>
+  <text class="d" x="56" y="279">Inicia sesión y guarda el token</text>
 
   <path class="arr" d="M260 153 H403"/>
   <path class="arr" d="M260 255 H330 V190 H403"/>
@@ -40,59 +43,78 @@
   <text class="lbl" x="350" y="176" text-anchor="middle">Bearer JWT</text>
 
   <!-- ===================== fuera de alcance ===================== -->
-  <rect class="fuera" x="40" y="330" width="220" height="250" rx="6"/>
+  <rect class="fuera" x="40" y="330" width="220" height="210" rx="6"/>
   <text class="t2" x="56" y="356">Fuera de alcance (esta fase)</text>
-  <text class="d" x="56" y="384">• Validar firma y vigencia del JWT</text>
-  <text class="d" x="56" y="406">• Login y emisión de tokens</text>
-  <text class="d" x="56" y="428">• Permisos y seguridad de datos</text>
-  <text class="d" x="56" y="450">• Auditoría de registros</text>
-  <text class="d" x="56" y="472">• Consolidar leads</text>
-  <text class="d" x="56" y="494">• Envío real de correos</text>
-  <text class="d" x="56" y="516">• Caché en Azure Tables</text>
-  <text class="d" x="56" y="538">• Log de peticiones en Blob Storage</text>
-  <text class="d" x="56" y="560">• Despliegue a Azure</text>
+  <text class="d" x="56" y="384">• Permisos y seguridad de datos</text>
+  <text class="d" x="56" y="406">• Inicio de sesión en la web</text>
+  <text class="d" x="56" y="428">• Consolidar leads</text>
+  <text class="d" x="56" y="450">• Envío real de correos</text>
+  <text class="d" x="56" y="472">• Caché en Azure Tables</text>
+  <text class="d" x="56" y="494">• Log de peticiones en Blob Storage</text>
+  <text class="d" x="56" y="516">• Despliegue a Azure</text>
 
   <!-- ===================== ISS-Leads ===================== -->
-  <rect class="cont" x="380" y="70" width="420" height="450" rx="8"/>
+  <rect class="cont" x="380" y="70" width="420" height="650" rx="8"/>
   <text class="t1" x="398" y="96">ISS-Leads</text>
   <text class="d" x="398" y="114">Azure Functions v4 · Node.js + TypeScript · PostgreSQL vía ISPBDSQL</text>
 
   <!-- handlers -->
-  <rect class="comp" x="405" y="128" width="370" height="80" rx="6"/>
+  <rect class="comp" x="405" y="128" width="370" height="100" rx="6"/>
   <text class="t2 mono" x="420" y="149">src/functions/</text>
   <text class="d" x="540" y="149">Handlers HTTP</text>
-  <text class="d mono" x="420" y="170">registerCatalogoGenAzureFunction(TLeadController)</text>
-  <text class="d" x="420" y="186">Rutas anidadas de mensajes por lead</text>
-  <text class="di" x="420" y="201">Solo enrutan y delegan: sin lógica de negocio</text>
+  <text class="d" x="420" y="168">Catálogos: leads, mensajes por lead y usuarios</text>
+  <text class="d" x="420" y="184">Sesiones: inicio (público) y cierre · verificar de leads</text>
+  <text class="d" x="420" y="200">Estado del servicio (público)</text>
+  <text class="di" x="420" y="218">Solo enrutan y delegan: sin lógica de negocio</text>
 
-  <path class="arr" d="M590 208 V248"/>
-  <text class="lbl" x="600" y="232">instancia y delega</text>
+  <path class="arr" d="M590 228 V260"/>
+  <text class="lbl" x="600" y="248">instancia y delega</text>
 
   <!-- controladores -->
-  <rect class="comp" x="405" y="250" width="370" height="128" rx="6"/>
-  <text class="t2 mono" x="420" y="271">src/sources/020 Controllers/</text>
-  <rect class="inner" x="417" y="280" width="346" height="42" rx="4"/>
-  <text class="t2 mono" x="428" y="297">TLeadController</text>
-  <text class="d" x="428" y="314">CRUD · verificar · listar · duplicar · recodificar · correos</text>
-  <rect class="inner" x="417" y="328" width="346" height="42" rx="4"/>
-  <text class="t2 mono" x="428" y="345">TLeadMensajeController</text>
-  <text class="d" x="428" y="362">Registrar · listar · obtener (movimiento, no se edita)</text>
+  <rect class="comp" x="405" y="262" width="370" height="290" rx="6"/>
+  <text class="t2 mono" x="420" y="283">src/sources/020 Controllers/</text>
 
-  <path class="arr" d="M590 378 V410"/>
-  <text class="lbl" x="600" y="398">usa</text>
+  <rect class="base" x="417" y="292" width="346" height="44" rx="4"/>
+  <text class="t2 mono" x="428" y="309">TSistemaLeads</text>
+  <text class="d" x="545" y="309">clase intermedia (abstracta)</text>
+  <text class="d" x="428" y="326">Exige el JWT en cada operación · estampa la auditoría</text>
+
+  <text class="di" x="428" y="353">heredan de TSistemaLeads:</text>
+
+  <rect class="inner" x="437" y="360" width="326" height="40" rx="4"/>
+  <text class="t2 mono" x="448" y="376">TLeadController</text>
+  <text class="d" x="448" y="392">CRUD · verificar · duplicar · recodificar · correos</text>
+
+  <rect class="inner" x="437" y="404" width="326" height="40" rx="4"/>
+  <text class="t2 mono" x="448" y="420">TLeadMensajeController</text>
+  <text class="d" x="448" y="436">Registrar · listar · obtener (no se edita)</text>
+
+  <rect class="inner" x="437" y="448" width="326" height="40" rx="4"/>
+  <text class="t2 mono" x="448" y="464">TUsuarioController</text>
+  <text class="d" x="448" y="480">CRUD · inicio y cierre de sesión · clave scrypt</text>
+
+  <rect class="inner" x="417" y="496" width="346" height="44" rx="4"/>
+  <text class="t2 mono" x="428" y="513">TSesionController</text>
+  <text class="d" x="566" y="513">extiende TControllerServer</text>
+  <text class="d" x="428" y="530">Abre y cierra sesiones · firma y verifica el JWT</text>
+
+  <path class="arr" d="M590 552 V584"/>
+  <text class="lbl" x="600" y="572">usa</text>
 
   <!-- objetos -->
-  <rect class="comp" x="405" y="412" width="370" height="92" rx="6"/>
-  <text class="t2 mono" x="420" y="433">src/sources/010 Objetos/</text>
-  <text class="d mono" x="420" y="454">TLead        extiende TObject</text>
-  <text class="d mono" x="420" y="472">TLeadCorreo  extiende TObject</text>
-  <text class="d mono" x="420" y="490">TLeadMensaje extiende TObject</text>
+  <rect class="comp" x="405" y="586" width="370" height="122" rx="6"/>
+  <text class="t2 mono" x="420" y="607">src/sources/010 Objetos/</text>
+  <text class="d mono" x="420" y="627">TLead        extiende TObjectBase</text>
+  <text class="d mono" x="420" y="644">TLeadCorreo  extiende TObject</text>
+  <text class="d mono" x="420" y="661">TLeadMensaje extiende TObjectBaseMov</text>
+  <text class="d mono" x="420" y="678">TUsuario     extiende TObjectBase</text>
+  <text class="d mono" x="420" y="695">TSesion      extiende TObjectBaseMov</text>
 
   <!-- ===================== paquetes base ===================== -->
   <path class="arr" d="M800 240 H868"/>
   <text class="lblb" x="834" y="231" text-anchor="middle">npm</text>
 
-  <rect class="cont" x="870" y="70" width="250" height="342" rx="8"/>
+  <rect class="cont" x="870" y="70" width="250" height="352" rx="8"/>
   <text class="t1" x="886" y="96">Paquetes base InSoft</text>
   <text class="d" x="886" y="114">@ingenieria_insoft/* · privados</text>
 
@@ -113,28 +135,38 @@
   <text class="t2" x="896" y="306">ISPNodeJS</text>
   <text class="d mono" x="896" y="323">varEnv · UUID</text>
 
-  <rect class="comp" x="884" y="338" width="222" height="58" rx="5"/>
+  <rect class="comp" x="884" y="338" width="222" height="72" rx="5"/>
   <text class="t2" x="896" y="356">ISPGen</text>
-  <text class="d mono" x="896" y="373">TObject · TArray</text>
-  <text class="d mono" x="896" y="388">val2Str · val2Int · val2Date</text>
+  <text class="d mono" x="896" y="373">TObject · TObjectBase</text>
+  <text class="d mono" x="896" y="388">TObjectBaseMov · TArray</text>
+  <text class="d mono" x="896" y="403">val2Str · val2Int · val2Date</text>
 
   <!-- ===================== PostgreSQL ===================== -->
-  <path class="arr" d="M995 412 V470"/>
-  <text class="lbl" x="1005" y="438">driver pg</text>
-  <text class="lbl" x="1005" y="453">DB_ENGINE=PG</text>
+  <path class="arr" d="M995 422 V474"/>
+  <text class="lbl" x="1005" y="444">driver pg</text>
+  <text class="lbl" x="1005" y="459">DB_ENGINE=PG</text>
 
-  <path d="M870 488 V570 A125 15 0 0 0 1120 570 V488" fill="#ffffff" stroke="#374151" stroke-width="1.4"/>
-  <ellipse cx="995" cy="488" rx="125" ry="15" fill="#eef2f7" stroke="#374151" stroke-width="1.4"/>
-  <text class="t2" x="995" y="526" text-anchor="middle">PostgreSQL 18 (local)</text>
-  <text class="d mono" x="995" y="545" text-anchor="middle">leads · leads_correos</text>
-  <text class="d mono" x="995" y="561" text-anchor="middle">leads_mensajes</text>
+  <path d="M870 492 V590 A125 15 0 0 0 1120 590 V492" fill="#ffffff" stroke="#374151" stroke-width="1.4"/>
+  <ellipse cx="995" cy="492" rx="125" ry="15" fill="#eef2f7" stroke="#374151" stroke-width="1.4"/>
+  <text class="t2" x="995" y="528" text-anchor="middle">PostgreSQL 18 (local)</text>
+  <text class="d mono" x="995" y="547" text-anchor="middle">leads · leads_correos</text>
+  <text class="d mono" x="995" y="563" text-anchor="middle">leads_mensajes</text>
+  <text class="d mono" x="995" y="579" text-anchor="middle">seg_usuarios · seg_sesiones</text>
+
+  <!-- ===================== terceros ===================== -->
+  <path class="arr" d="M800 669 H868"/>
+  <text class="lblb" x="834" y="660" text-anchor="middle">npm</text>
+  <rect class="comp" x="870" y="640" width="250" height="58" rx="6"/>
+  <text class="t2" x="886" y="661">jsonwebtoken</text>
+  <text class="d" x="984" y="661">npm público · 9.x</text>
+  <text class="d mono" x="886" y="681">sign · verify (HS256)</text>
 
   <!-- ===================== convenciones ===================== -->
-  <rect x="40" y="606" width="1080" height="44" fill="#f9fafb" stroke="#d1d5db" stroke-width="1"/>
-  <line x1="56" y1="628" x2="106" y2="628" stroke="#374151" stroke-width="1.4" marker-end="url(#flecha)"/>
-  <text class="lbl" x="116" y="632">Llamada o dependencia</text>
-  <rect x="290" y="618" width="40" height="20" fill="#ffffff" stroke="#374151" stroke-width="1.3" stroke-dasharray="6 4"/>
-  <text class="lbl" x="340" y="632">Componente opcional o fuera de alcance</text>
-  <text class="lbl" x="600" y="626">Bearer JWT: solo se define el contrato; el servicio no lo valida ni lo usa.</text>
-  <text class="lbl" x="600" y="641">Conexión a BD: variables DB_* en local.settings.json (no versionado).</text>
+  <rect x="40" y="740" width="1080" height="56" fill="#f9fafb" stroke="#d1d5db" stroke-width="1"/>
+  <line x1="56" y1="768" x2="106" y2="768" stroke="#374151" stroke-width="1.4" marker-end="url(#flecha)"/>
+  <text class="lbl" x="116" y="772">Llamada o dependencia</text>
+  <rect x="290" y="758" width="40" height="20" fill="#ffffff" stroke="#374151" stroke-width="1.3" stroke-dasharray="6 4"/>
+  <text class="lbl" x="340" y="772">Componente opcional o fuera de alcance</text>
+  <text class="lbl" x="600" y="762">Bearer JWT: lo emite POST /api/sesiones y TSistemaLeads lo valida en cada operación.</text>
+  <text class="lbl" x="600" y="779">Llaves: DB_* y JWT_SECRET en local.settings.json (no versionado).</text>
 </svg>

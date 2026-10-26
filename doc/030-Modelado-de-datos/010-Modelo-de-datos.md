@@ -10,17 +10,34 @@ aliases: [DER]
 
 ![Diagrama entidad-relación de Leads](../999-Adjuntos/010-Diagramas/010-DER-Leads.svg)
 
-## Cada tabla tiene un tipo y ninguna lleva auditoría
+## Cada tabla tiene un tipo, y el tipo decide su auditoría
 
-El tipo dice cómo se comporta la tabla; por decisión del proyecto ninguna lleva columnas de auditoría, y eso es la deuda técnica DT1 de [Deudas técnicas](../990-Deudas-tecnicas.md).
+El tipo dice cómo se comporta la tabla y qué columnas de auditoría lleva, según el Modelo B (usuario único) de la norma: las de datos llevan creación y modificación, las de movimiento solo creación porque no se modifican, y las de detalle ninguna porque las cubre su tabla principal.
 
-| Tabla | Tipo | Llave primaria | Objeto | Se modifica |
-| --- | --- | --- | --- | --- |
-| `leads` | Datos (entidad principal) | `ilead` | `TLead` | Sí |
-| `leads_correos` | Detalle de `leads` | `ilead`, `email` | `TLeadCorreo` | Solo a través del lead |
-| `leads_mensajes` | Movimiento de `leads` | `imensaje` | `TLeadMensaje` | No: se registra una vez |
+| Tabla | Tipo | Llave primaria | Objeto | Auditoría | Se modifica |
+| --- | --- | --- | --- | --- | --- |
+| `leads` | Datos (entidad principal) | `ilead` | `TLead` (`TObjectBase`) | Creación y modificación | Sí |
+| `leads_correos` | Detalle de `leads` | `ilead`, `email` | `TLeadCorreo` (`TObject`) | No lleva | Solo a través del lead |
+| `leads_mensajes` | Movimiento de `leads` | `imensaje` | `TLeadMensaje` (`TObjectBaseMov`) | Creación | No: se registra una vez |
+| `seg_usuarios` | Datos | `iusuario` | `TUsuario` (`TObjectBase`) | Creación y modificación | Sí |
+| `seg_sesiones` | Movimiento | `isesion` | `TSesion` (`TObjectBaseMov`) | Creación | No: se crea al iniciar sesión y se borra al cerrarla |
 
-Los tres objetos extienden `TObject` de `ISPGen`: `TObjectBase` y `TObjectBaseMov` exigen columnas de auditoría que estas tablas no tienen.
+Los objetos heredan las columnas de auditoría de `ISPGen`, y el controlador hidrata cada columna por su nombre: por eso cada tabla tiene exactamente las columnas que serializa su clase base.
+
+## La auditoría la pone el servidor con los datos de la sesión
+
+| Columnas | Tipo | Contenido |
+| --- | --- | --- |
+| `iusuariocre`, `iusuarioult` | `varchar(30)` | Usuario de la sesión que creó o modificó por última vez |
+| `iappcre`, `iappult` | `varchar(20)` | Aplicación de la sesión (`TIS_IApp`) |
+| `iequipocre`, `iequipoult` | `int` | Equipo de la sesión |
+| `ipcre`, `ipult` | `varchar(20)` | IP de la petición |
+| `fhcre`, `fhult` | `timestamptz` | Fecha y hora del servidor |
+
+- Las de creación se llenan al crear y las de modificación al crear y al modificar; duplicar llena ambas en la copia y recodificar, las de modificación.
+- Lo que mande el cliente en esas columnas se ignora: el origen es la sesión del token (ver [Seguridad](../040-Procesos/010-Seguridad.md)), así nadie puede firmar un cambio a nombre de otro.
+- En `seg_sesiones`, la auditoría de creación es la del propio inicio de sesión, porque todavía no hay token.
+- Los registros creados antes de agregar la auditoría la tienen vacía.
 
 ## Las relaciones las valida el controlador, no la base de datos
 
@@ -29,8 +46,10 @@ La BD no declara llaves foráneas (norma InSoft), así que estas reglas viven en
 1. `leads_correos.ilead` y `leads_mensajes.ilead` deben existir en `leads`.
 2. Al registrar un mensaje, `leads_mensajes.email` debe existir en `leads_correos` para ese mismo lead. Queda como copia histórica: si después se borra o cambia el correo, el mensaje conserva la dirección a la que salió.
 3. Un lead tiene como máximo un correo con `bprincipal = true`.
-4. `ilead` e `imensaje` los asigna el controlador con `nextVal` de `ISPBDSQL` sobre las secuencias `seq_leads` y `seq_leads_mensajes`. Las columnas no usan `IDENTITY` ni `serial` (decisión D3).
-5. Toda columna admite nulos salvo la llave primaria; los obligatorios de negocio se validan en el controlador: `leads.nombre`, `leads_correos.email`, y en el mensaje `email`, `asunto` y `fhenvio`.
+4. `ilead`, `imensaje` e `isesion` los asigna el controlador con `nextVal` de `ISPBDSQL` sobre las secuencias `seq_leads`, `seq_leads_mensajes` y `seq_seg_sesiones`. Las columnas no usan `IDENTITY` ni `serial` (decisión D3).
+5. `iusuario` es la llave natural del usuario y se guarda en minúscula y sin espacios, para que el inicio de sesión no distinga mayúsculas.
+6. `seg_sesiones.iusuario` es un usuario de `seg_usuarios`; eliminar el usuario borra sus sesiones, así ningún token queda vivo sin dueño.
+7. Toda columna admite nulos salvo la llave primaria; los obligatorios de negocio se validan en el controlador: `leads.nombre`, `leads_correos.email`, en el mensaje `email`, `asunto` y `fhenvio`, y en el usuario `nombre` y `clave`.
 
 ## El lead arrastra distintas tablas según la operación
 
